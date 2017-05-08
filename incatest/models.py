@@ -61,5 +61,13 @@ class Fund(models.Model):
 		db_table = 'stock_itemcode'
 
 
+class File(models.Model):
+	filename = models.FileField(upload_to='%Y%m%d', blank=True, null=True)
+
+
+
+
+
+
 
 

@@ -4,15 +4,43 @@
 
 {% block content %}
 <div class="row">
+<form action="{% url 'insu_store' %}" method="POST" style="margin-bottom:2%">
+  {% csrf_token %}
   <div class="col-md-6 col-md-offset-3">
     {% if funds %}
-      <select class="js-example-basic-multiple" multiple="multiple">
+      <select name="code-list" class="js-example-basic-single">
       {% for fund in funds %}
-        <option value="AL">{{ fund.itemcode }}</option>
+        <option value="{{ fund.itemcode }}">{{ fund.itemcode }}</option>
       {% endfor %}
       </select>
     {% endif %}
+    <div class="col-sm-3" >
+        <div class="form-group">
+          <div class='input-group date'>
+            <input type='text' name="s_date" class="form-control" />
+            <span class="input-group-addon">
+              <span class="glyphicon glyphicon-calendar">
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    <div class="col-sm-3" >
+        <div class="form-group">
+          <div class='input-group date'>
+            <input type='text' name="e_date" class="form-control" />
+            <span class="input-group-addon">
+              <span class="glyphicon glyphicon-calendar">
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    <span class="input-group-btn">
+      <button class="btn btn-default" type="submit">코드 선택</button>
+    </span>
   </div>
+  </form>
 </div>
 
 {% endblock %}
@@ -20,7 +48,60 @@
 
 {% block script %}
 <script type="text/javascript">
-$(".js-example-basic-multiple").select2();
+$(document).ready(function() {
+  $(".js-example-basic-single").select2();
+});
+
+// date selection
+$(function () {
+             $(function () {
+         var bindDatePicker = function() {
+          $(".date").datetimepicker({
+              format:'YYYY-MM-DD',
+              viewMode: 'years',
+            icons: {
+              time: "fa fa-clock-o",
+              date: "fa fa-calendar",
+              up: "fa fa-arrow-up",
+              down: "fa fa-arrow-down"
+            }
+          }).find('input:first').on("blur",function () {
+            // check if the date is correct. We can accept dd-mm-yyyy and yyyy-mm-dd.
+            // update the format if it's yyyy-mm-dd
+            var date = parseDate($(this).val());
+
+            if (! isValidDate(date)) {
+              //create date based on momentjs (we have that)
+              date = moment().format('YYYY-MM-DD');
+            }
+
+            $(this).val(date);
+          });
+        }
+         
+         var isValidDate = function(value, format) {
+          format = format || false;
+          // lets parse the date to the best of our knowledge
+          if (format) {
+            value = parseDate(value);
+          }
+
+          var timestamp = Date.parse(value);
+
+          return isNaN(timestamp) == false;
+         }
+         
+         var parseDate = function(value) {
+          var m = value.match(/^(\d{1,2})(\/|-)?(\d{1,2})(\/|-)?(\d{4})$/);
+          if (m)
+            value = m[5] + '-' + ("00" + m[3]).slice(-2) + '-' + ("00" + m[1]).slice(-2);
+
+          return value;
+         }
+         
+         bindDatePicker();
+       });
+        });
 </script>
 {% endblock %}
 

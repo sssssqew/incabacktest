@@ -4,10 +4,13 @@ from __future__ import unicode_literals
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
-from .models import Outcome, Price, Fund
+from django.conf import settings
+
+from .models import Outcome, Price, Fund, File
 
 import csv
 import json
+from os.path import join
 
 from datetime import datetime
 from datetime import timedelta
@@ -41,15 +44,35 @@ def index(requesst):
 		print price.trading_value
 		print " ---------------------------- "
 		cnt = cnt + 1
+	# print type('2014-04-13')
 	return HttpResponse(cnt)
 
 
 def create(request):
 	funds = Fund.objects.all()
 	context = {'funds':funds}
-	
+
 	return render(request, "incatest/create.html", context)
 
 
 def store(request):
-	return HttpResponse("store")
+	today = datetime.now().strftime("%Y%m%d")
+	selected_code = request.POST.get('code-list')
+	# print selected_code
+	s_date = request.POST.get("s_date")
+	e_date = request.POST.get("e_date")
+	# print s_date
+	prices = Price.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
+
+	# Create path of file
+	filename = "insu_" + s_date + "_to_" + e_date + ".csv"
+	filepath = join(settings.MEDIA_ROOT, filename)
+	print filepath
+	
+	with open(filepath, 'w') as f:
+		writer = csv.writer(f, csv.excel)
+		for price in prices:
+			writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, price.close])
+		
+	# return HttpResponse("store")
+	return HttpResponseRedirect(reverse('insu_index'))
