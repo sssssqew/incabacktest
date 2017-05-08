@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
-from .models import incaoutcomes, incaprices
+from .models import Outcome, Price, Fund
 
 import csv
 import json
@@ -15,7 +15,7 @@ from datetime import timedelta
 # Create your views here.
 def index(requesst):
 	cnt = 0
-	# outcomes = incaoutcomes.objects.all()
+	# outcomes = Outcome.objects.all()
 	# for outcome in outcomes:
 	# 	if cnt < 10:
 	# 		print " -------------------------- "
@@ -28,7 +28,7 @@ def index(requesst):
 	# 		print outcome.MIN_rate
 	# 		print " ---------------------------- "
 
-	prices = incaprices.objects.filter(itemcode='KLVL01V2101', wdate__gte='2015-04-20', wdate__lte='2015-04-30')
+	prices = Price.objects.filter(itemcode='KLVL01V2101', wdate__range=['2015-04-20', '2015-05-10'])
 	for price in prices:
 		print " -------------------------- "
 		print price.itemcode
@@ -42,3 +42,14 @@ def index(requesst):
 		print " ---------------------------- "
 		cnt = cnt + 1
 	return HttpResponse(cnt)
+
+
+def create(request):
+	funds = Fund.objects.all()
+	context = {'funds':funds}
+	
+	return render(request, "incatest/create.html", context)
+
+
+def store(request):
+	return HttpResponse("store")

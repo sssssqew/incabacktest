@@ -1,0 +1,20 @@
+{% extends 'incatest/base.html' %}
+
+{% block content %}
+{% if funds %}
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <ul>
+    {% for fund in funds %}
+      <li>
+        {{ fund.itemcode }}
+      </li>
+    {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endif %}
+
+    
+{% endblock %}
+
