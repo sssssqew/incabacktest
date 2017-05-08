@@ -10,13 +10,14 @@ from .models import Outcome, Price, Fund, File
 
 import csv
 import json
+import os
 from os.path import join
 
 from datetime import datetime
 from datetime import timedelta
 
 # Create your views here.
-def index(requesst):
+def index(request):
 	cnt = 0
 	# outcomes = Outcome.objects.all()
 	# for outcome in outcomes:
@@ -31,21 +32,41 @@ def index(requesst):
 	# 		print outcome.MIN_rate
 	# 		print " ---------------------------- "
 
-	prices = Price.objects.filter(itemcode='KLVL01V2101', wdate__range=['2015-04-20', '2015-05-10'])
-	for price in prices:
-		print " -------------------------- "
-		print price.itemcode
-		print price.wdate
-		# print price.open
-		# print price.high
-		# print price.low
-		print price.close
-		print price.trading_volume
-		print price.trading_value
-		print " ---------------------------- "
-		cnt = cnt + 1
+	# prices = Price.objects.filter(itemcode='KLVL01V2101', wdate__range=['2015-04-20', '2015-05-10'])
+	# for price in prices:
+	# 	print " -------------------------- "
+	# 	print price.itemcode
+	# 	print price.wdate
+	# 	# print price.open
+	# 	# print price.high
+	# 	# print price.low
+	# 	print price.close
+	# 	print price.trading_volume
+	# 	print price.trading_value
+	# 	print " ---------------------------- "
+	# 	cnt = cnt + 1
 	# print type('2014-04-13')
-	return HttpResponse(cnt)
+
+	files = []
+	for file in os.listdir(settings.MEDIA_ROOT):
+		files.append(os.path.splitext(file)[0])
+		print os.path.splitext(file)[0]
+	context = {'files':files}
+	return render(request, "incatest/index.html", context)
+	# return HttpResponse(cnt)
+
+def show(request, fname):
+	rows = []
+	filename = fname + '.csv'
+	filepath = join(settings.MEDIA_ROOT, filename)
+	with open(filepath, 'r') as f:
+		reader = csv.reader(f, delimiter=str(',')) 
+		for row in reader: 
+			rows.append(row)
+			print row
+
+	context = {'rows':rows}
+	return render(request, 'incatest/show.html', context)
 
 
 def create(request):
