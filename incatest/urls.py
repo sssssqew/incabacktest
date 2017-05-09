@@ -8,9 +8,9 @@ from . import views
 # url order is very important 
 urlpatterns = [
 	url(r'^back-tests/$', views.index, name='insu_index'),
-	url(r'^back-tests/(?P<fname>.+)/$', views.show, name='insu_show'),
 	url(r'^back-tests/create/$', views.create, name='insu_create'),
 	url(r'^back-tests/store/$', views.store, name='insu_store'),
+	url(r'^back-tests/(?P<fname>.+)/$', views.show, name='insu_show'),
 ]
 
 urlpatterns += static('/upload/', document_root=settings.MEDIA_ROOT)

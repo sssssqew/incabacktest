@@ -6,6 +6,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
+from background_task import background
 from .models import Outcome, Price, Fund, File
 
 import csv
@@ -63,7 +64,7 @@ def show(request, fname):
 		reader = csv.reader(f, delimiter=str(',')) 
 		for row in reader: 
 			rows.append(row)
-			print row
+			# print row
 
 	context = {'rows':rows}
 	return render(request, 'incatest/show.html', context)
@@ -75,6 +76,13 @@ def create(request):
 
 	return render(request, "incatest/create.html", context)
 
+@background(queue='my-queue')
+def writetocsv(filepath, prices_ids):
+	prices = Price.objects.filter(id__in=prices_ids)
+	with open(filepath, 'w') as f:
+		writer = csv.writer(f, csv.excel)
+		for price in prices:
+			writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, price.close])
 
 def store(request):
 	today = datetime.now().strftime("%Y%m%d")
@@ -89,11 +97,11 @@ def store(request):
 	filename = "insu_" + s_date + "_to_" + e_date + ".csv"
 	filepath = join(settings.MEDIA_ROOT, filename)
 	print filepath
+
+	# for idx in prices.values_list('id', flat=True):
+	# 	print Price.objects.get(pk=idx).itemcode
+	prices_ids = tuple(prices.values_list('id', flat=True))
+	writetocsv(filepath, prices_ids)
 	
-	with open(filepath, 'w') as f:
-		writer = csv.writer(f, csv.excel)
-		for price in prices:
-			writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, price.close])
-		
 	# return HttpResponse("store")
 	return HttpResponseRedirect(reverse('insu_index'))

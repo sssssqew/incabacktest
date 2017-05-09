@@ -1,12 +1,28 @@
 {% extends 'incatest/base.html' %}
 
 {% block content %}
-{% if rows %}
-{% for row in rows %}
-{{ row.0 }} ,
-{{ row.1 }} ,
-{{ row.2 }}
-<br>
-{% endfor %}
-{% endif %}
+<div class="row">
+	<div class="col-md-6 col-md-offset-3">
+	{% if rows %}
+	<table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Code</th>
+        <th>Date</th>
+        <th>Price</th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+      <tr>
+        <td>{{ row.0 }}</td>
+        <td>{{ row.1 }}</td>
+        <td>{{ row.2 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+	{% endif %}
+	</div>
+</div>
 {% endblock %}
