@@ -28,6 +28,27 @@ class Outcome(models.Model):
 	def __str__(self):
 		return self.itemname.encode('utf-8')
 
+	def adjustScore(self):
+		adj_score = self.DNA_score
+		
+		if self.DNA_score > 10:
+			adj_score = 10
+
+		# print self.DNA_score
+		# print adj_score
+
+		return adj_score
+
+	def adjustIndex(self):
+		adj_index = self.DNA_index
+
+		if self.DNA_index > 10:
+			adj_index = 10
+
+		# print self.DNA_index
+		# print adj_index
+
+		return adj_index
 
 class Price(models.Model):
 	itemcode = models.CharField(max_length=20,  blank=True, null=True)
@@ -50,6 +71,14 @@ class Price(models.Model):
 
 	def __str__(self):
 		return self.itemcode.encode('utf-8')
+
+	def getInterest(self):
+		next_item =  Price.objects.filter(wdate__gt=self.wdate).order_by('wdate').first()
+		interest = (next_item.close-self.close)/self.close
+		# print next_item.wdate
+		# print self.wdate
+		return interest
+
 
 
 class Fund(models.Model):

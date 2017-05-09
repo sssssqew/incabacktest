@@ -76,21 +76,57 @@ def create(request):
 
 	return render(request, "incatest/create.html", context)
 
-@background(queue='my-queue')
+# @background(queue='my-queue')
 def writetocsv(filepath, prices_ids):
+	# outcomes = Price.objects.filter(id__in=outcomes_ids)
 	prices = Price.objects.filter(id__in=prices_ids)
+
+	cnt = 0
 	with open(filepath, 'w') as f:
 		writer = csv.writer(f, csv.excel)
 		for price in prices:
-			writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, price.close])
+			
+			interest = price.getInterest()
+			adj_score = 0
+			adj_index = 0
+			interest_score = 0
+			interest_index = 0
+		
+			try:
+				outcome = Outcome.objects.get(wdate=price.wdate, itemcode=price.itemcode)
+				adj_score = outcome.adjustScore()
+				adj_index = outcome.adjustIndex()
+
+				interest_score = (interest * adj_score)/10
+				interest_index = (interest * adj_index)/10
+				# print "--------    score ----------"
+				# print adj_score
+				# print outcome.DNA_score
+				# print "--------    index ----------"
+				# print adj_index
+				# print outcome.DNA_index
+
+				# print "-----------------------------------------------"
+				# print outcome.wdate
+				cnt = cnt + 1
+				# print "----------- interest_score --------------------------------"
+				# print interest_score 
+			except:
+				print "outcome related to price doesn't exist"
+			# print price.wdate 
+			
+			writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, interest, 10, adj_index, interest_index, adj_score, interest_score])
+	# print cnt
 
 def store(request):
 	today = datetime.now().strftime("%Y%m%d")
 	selected_code = request.POST.get('code-list')
-	# print selected_code
+	print selected_code
+
 	s_date = request.POST.get("s_date")
 	e_date = request.POST.get("e_date")
 	# print s_date
+	# outcomes = Outcome.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
 	prices = Price.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
 
 	# Create path of file
@@ -100,8 +136,17 @@ def store(request):
 
 	# for idx in prices.values_list('id', flat=True):
 	# 	print Price.objects.get(pk=idx).itemcode
+
+	# print outcomes
+	# cnt = 0
+	# for outcome in outcomes:
+	# 	cnt = cnt + 1
+	# 	print outcome.wdate
+
+	# outcomes_ids = tuple(outcomes.values_list('id', flat=True))
 	prices_ids = tuple(prices.values_list('id', flat=True))
 	writetocsv(filepath, prices_ids)
+	# print cnt 
 	
 	# return HttpResponse("store")
 	return HttpResponseRedirect(reverse('insu_index'))
