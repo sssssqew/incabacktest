@@ -34,5 +34,42 @@
   </table>
 	{% endif %}
 	</div>
+	<br><br>
+	<div id="chart"  style="margin-top:7%;"></div>
 </div>
+{% endblock %}
+
+
+{% block script %}
+{% if columns %}
+<script type="text/javascript">
+    var columns_json = '{{ columns | safe }}';
+    console.log(columns_json);
+    var col = JSON.parse(columns_json);
+    console.log(col);
+
+    var chart = c3.generate({
+        data: {
+            x: 'x',
+            columns: col
+        },
+        axis: {
+            x: {
+                type: 'timeseries',
+                tick: {
+                    format: '%Y-%m-%d'
+                }
+            }
+        },
+        grid: {
+            x: {
+                show: true
+            },
+            y: {
+                show: true
+            }
+        }
+    });
+</script>
+{% endif %}
 {% endblock %}

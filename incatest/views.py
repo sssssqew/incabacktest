@@ -58,15 +58,31 @@ def index(request):
 
 def show(request, fname):
 	rows = []
+
+	date = []
+	interest = []
+	interest_index = []
+	interest_score = []
+
 	filename = fname + '.csv'
 	filepath = join(settings.MEDIA_ROOT, filename)
 	with open(filepath, 'r') as f:
-		reader = csv.reader(f, delimiter=str(',')) 
+		reader = list(csv.reader(f, delimiter=str(',')))
 		for row in reader: 
 			rows.append(row)
-			# print row
+			if row != reader[-1]:
+				date.append(row[1])
+				interest.append(row[2])
+				interest_index.append(row[5])
+				interest_score.append(row[7])
 
-	context = {'rows':rows}
+	date.insert(0, 'x')
+	interest.insert(0, '일간수익률')
+	interest_index.insert(0, '일간수익률(Index)')
+	interest_score.insert(0, '일간수익률(Score)')
+
+	columns = [date, interest, interest_index, interest_score]
+	context = {'columns': json.dumps(columns), 'rows':rows}
 	return render(request, 'incatest/show.html', context)
 
 
