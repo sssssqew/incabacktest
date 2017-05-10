@@ -76,10 +76,17 @@ def create(request):
 
 	return render(request, "incatest/create.html", context)
 
-# @background(queue='my-queue')
+@background(queue='my-queue')
 def writetocsv(filepath, prices_ids):
 	# outcomes = Price.objects.filter(id__in=outcomes_ids)
 	prices = Price.objects.filter(id__in=prices_ids)
+
+	total_interest = 0
+	total_weight = 0
+	total_index = 0
+	total_interest_index = 0
+	total_score = 0
+	total_interest_score = 0
 
 	cnt = 0
 	with open(filepath, 'w') as f:
@@ -87,6 +94,9 @@ def writetocsv(filepath, prices_ids):
 		for price in prices:
 			
 			interest = price.getInterest()
+			total_interest += interest
+			total_weight += 10
+
 			adj_score = 0
 			adj_index = 0
 			interest_score = 0
@@ -99,6 +109,13 @@ def writetocsv(filepath, prices_ids):
 
 				interest_score = (interest * adj_score)/10
 				interest_index = (interest * adj_index)/10
+
+				total_score += adj_score
+				total_index += adj_index
+
+				total_interest_index += interest_index
+				total_interest_score += interest_score
+
 				# print "--------    score ----------"
 				# print adj_score
 				# print outcome.DNA_score
@@ -116,6 +133,7 @@ def writetocsv(filepath, prices_ids):
 			# print price.wdate 
 			
 			writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, interest, 10, adj_index, interest_index, adj_score, interest_score])
+		writer.writerow([price.itemcode.encode('euc-kr'), "Total", total_interest, total_weight, total_index, total_interest_index, total_score, total_interest_score])
 	# print cnt
 
 def store(request):

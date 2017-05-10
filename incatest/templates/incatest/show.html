@@ -7,17 +7,27 @@
 	<table class="table table-striped">
     <thead>
       <tr>
-        <th>Code</th>
-        <th>Date</th>
-        <th>Price</th>
+        <th>코드</th>
+        <th>날짜</th>
+        <th>일간수익률</th>
+        <th>일간비중</th>
+        <th>INDEX</th>
+        <th>일간수익률(INDEX)</th>
+        <th>SCORE</th>
+        <th>일간수익률(SCORE)</th>
       </tr>
     </thead>
     <tbody>
         {% for row in rows %}
       <tr>
-        <td>{{ row.0 }}</td>
-        <td>{{ row.1 }}</td>
+        <td>{{ row.0 | safe }}</td>
+        <td>{{ row.1 | safe }}</td>
         <td>{{ row.2 }}</td>
+        <td>{{ row.3 }}</td>
+        <td>{{ row.4 }}</td>
+        <td>{{ row.5 }}</td>
+        <td>{{ row.6 }}</td>
+        <td>{{ row.7 }}</td>
       </tr>
       {% endfor %}
     </tbody>
