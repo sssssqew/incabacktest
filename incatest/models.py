@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models
 from django.utils import timezone
+import os
 
 
 # Create your models here.
@@ -90,8 +91,27 @@ class Fund(models.Model):
 		db_table = 'stock_itemcode'
 
 
-class File(models.Model):
-	filename = models.FileField(upload_to='%Y%m%d', blank=True, null=True)
+# class File(models.Model):
+# 	filename = models.FileField(upload_to='%Y%m%d', blank=True, null=True)
+
+
+class Result(models.Model):
+	itemcode = models.CharField(max_length=20,  blank=True, null=True)
+	start_date = models.DateField(blank=True, null=True)
+	end_date = models.DateField(blank=True, null=True)
+
+
+class Log(models.Model):
+	result = models.ForeignKey(Result)
+	wdate = models.DateField(blank=True, null=True)
+	interest = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+	interest_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+	interest_index = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+	interest_index_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+	interest_score = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+	interest_score_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+
+
 
 
 
