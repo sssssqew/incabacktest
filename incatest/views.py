@@ -112,7 +112,7 @@ def create(request):
 
 	return render(request, "incatest/create.html", context)
 
-@background(queue='inca-queue-csv-3')
+@background(queue='inca-queue-csv-5')
 def writetocsv(filepath, prices_ids, result_id):
 	prices = Price.objects.filter(id__in=prices_ids)
 
@@ -171,9 +171,9 @@ def writetocsv(filepath, prices_ids, result_id):
 				log = Log.objects.get(result_id=result_id, wdate=price.wdate)
 				print "log already exists in db"
 			except:
-				intervsinvest_sum = total_interest / total_weight * 100
-				intervsinvest_index_sum = total_interest_index / total_index * 100
-				intervsinvest_score_sum = total_interest_score / total_score * 100
+				intervsinvest_sum = (total_interest * total_weight) /  total_weight
+				intervsinvest_index_sum = (total_interest_index * total_index) / total_weight
+				intervsinvest_score_sum = (total_interest_score * total_score) / total_weight
 				log = Log(
 					result_id = result_id, 
 					wdate = price.wdate, 
@@ -193,9 +193,9 @@ def writetocsv(filepath, prices_ids, result_id):
 			writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, 10, interest, adj_index, interest_index, adj_score, interest_score])
 
 		# 투자대비 수익률 계산
-		intervsinvest = total_interest / total_weight * 100
-		intervsinvest_index = total_interest_index / total_index * 100
-		intervsinvest_score = total_interest_score / total_score * 100
+		intervsinvest = (total_interest * total_weight) /  total_weight
+		intervsinvest_index = (total_interest_index * total_index) / total_weight
+		intervsinvest_score = (total_interest_score * total_score) / total_weight
 
 		# save backtest result in db
 		try:
