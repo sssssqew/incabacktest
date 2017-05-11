@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 
 from background_task import background
-from .models import Outcome, Price, Fund, Result, Log
+from .models import Outcome, Price, Fund, Result, Log, InterVSInvest
 
 import csv
 import json
@@ -75,6 +75,10 @@ def show(request, fname):
 	e_date = fnames[4]
 
 	result = Result.objects.get(itemcode=code, start_date=s_date, end_date=e_date)
+	try:
+		IVSI = InterVSInvest.objects.get(result_id=result.id)
+	except:
+		IVSI = InterVSInvest()
 
 	with open(filepath, 'r') as f:
 		reader = list(csv.reader(f, delimiter=str(',')))
@@ -99,12 +103,12 @@ def show(request, fname):
 			rows.append(row)
 
 	date.insert(0, 'x')
-	interest.insert(0, '일간수익률')
-	interest_index.insert(0, '일간수익률(Index)')
-	interest_score.insert(0, '일간수익률(Score)')
+	interest.insert(0, '누적 일간수익률')
+	interest_index.insert(0, '누적 일간수익률(Index)')
+	interest_score.insert(0, '누적 일간수익률(Score)')
 
 	columns = [date, interest, interest_index, interest_score]
-	context = {'columns': json.dumps(columns), 'rows':rows}
+	context = {'columns': json.dumps(columns), 'rows':rows, 'IVSI':IVSI}
 	return render(request, 'incatest/show.html', context)
 
 
@@ -114,7 +118,7 @@ def create(request):
 
 	return render(request, "incatest/create.html", context)
 
-@background(queue='write-to-csv-3')
+@background(queue='write-to-csv-5')
 def writetocsv(filepath, prices_ids, result_id):
 	# outcomes = Price.objects.filter(id__in=outcomes_ids)
 	prices = Price.objects.filter(id__in=prices_ids)
@@ -126,6 +130,11 @@ def writetocsv(filepath, prices_ids, result_id):
 	total_interest_index = 0
 	total_score = 0
 	total_interest_score = 0
+
+	# 투자대비 수익률 변수 
+	intervsinvest = 0
+	intervsinvest_index = 0
+	intervsinvest_score = 0
 
 	cnt = 0
 	with open(filepath, 'w') as f:
@@ -191,7 +200,30 @@ def writetocsv(filepath, prices_ids, result_id):
 
 			# save in file 
 			writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, 10, interest, adj_index, interest_index, adj_score, interest_score])
+
+		# 투자대비 수익률 계산
+		intervsinvest = total_interest / total_weight * 100
+		intervsinvest_index = total_interest_index / total_index * 100
+		intervsinvest_score = total_interest_score / total_score * 100
+
+		# save backtest result in db
+		try:
+			IVSI = InterVSInvest.objects.get(result_id=result_id)
+			print "IVSI already exists in db"
+		except:
+			IVSI = InterVSInvest(
+				result_id = result_id, 
+				intervsinvest = intervsinvest,
+				intervsinvest_index = intervsinvest_index,
+				intervsinvest_score = intervsinvest_score
+			)
+			IVSI.save()
+			print "IVSI saved in db"
+
 		writer.writerow([price.itemcode.encode('euc-kr'), "Total", total_weight, total_interest, total_index, total_interest_index, total_score, total_interest_score])
+
+		
+
 	# print cnt
 
 def store(request):

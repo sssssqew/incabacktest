@@ -3,6 +3,15 @@
 {% block content %}
 <div class="row">
 	<div class="col-md-8 col-md-offset-2">
+	{% if IVSI %}
+	<!-- <hr> -->
+		<h4>투자대비 수익률 : {{ IVSI.intervsinvest }}</h4>
+		<h4>투자대비 수익률(INDEX) : {{ IVSI.intervsinvest_index }}</h4>
+		<h4>투자대비 수익률(SCORE) : {{ IVSI.intervsinvest_score }}</h4>
+	<hr>
+	{% endif %}
+	</div>
+	<div class="col-md-8 col-md-offset-2">
 	{% if rows %}
 	<table class="table table-striped">
     <thead>
