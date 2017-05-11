@@ -38,6 +38,10 @@ def show(request, fname):
 	interest_index = []
 	interest_score = []
 
+	interest_IVSI = []
+	interest_index_IVSI = []
+	interest_score_IVSI = []
+
 	filename = fname + '.csv'
 	filepath = join(settings.MEDIA_ROOT, filename)
 
@@ -71,10 +75,19 @@ def show(request, fname):
 				interest_index.append(str(log.interest_index_sum))
 				interest_score.append(str(log.interest_score_sum))
 
+				interest_IVSI.append(str(log.intervsinvest_sum))
+				interest_index_IVSI.append(str(log.intervsinvest_index))
+				interest_score_IVSI.append(str(log.intervsinvest_score_sum))
+
 				#누적수익률 추가 
 				row.append(str(log.interest_sum))
 				row.append(str(log.interest_index_sum))
 				row.append(str(log.interest_score_sum))
+
+				#투자대비 수익률 
+				row.append(str(log.intervsinvest_sum))
+				row.append(str(log.intervsinvest_index_sum))
+				row.append(str(log.intervsinvest_score_sum))
 
 			rows.append(row)
 
@@ -83,7 +96,11 @@ def show(request, fname):
 	interest_index.insert(0, '누적 일간수익률(Index)')
 	interest_score.insert(0, '누적 일간수익률(Score)')
 
-	columns = [date, interest, interest_index, interest_score]
+	interest_IVSI.insert(0, '투자대비 수익률')
+	interest_index_IVSI.insert(0, '투자대비 수익률(Index)')
+	interest_score_IVSI.insert(0, '투자대비 수익률(Score)')
+
+	columns = [date, interest, interest_index, interest_score, interest_IVSI, interest_index_IVSI, interest_score_IVSI]
 	context = {'columns': json.dumps(columns), 'rows':rows, 'IVSI':IVSI}
 	return render(request, 'incatest/show.html', context)
 
@@ -94,7 +111,7 @@ def create(request):
 
 	return render(request, "incatest/create.html", context)
 
-@background(queue='inca-queue-csv')
+@background(queue='inca-queue-csv-3')
 def writetocsv(filepath, prices_ids, result_id):
 	prices = Price.objects.filter(id__in=prices_ids)
 
@@ -109,6 +126,10 @@ def writetocsv(filepath, prices_ids, result_id):
 	intervsinvest = 0
 	intervsinvest_index = 0
 	intervsinvest_score = 0
+
+	intervsinvest_sum = 0
+	intervsinvest_index_sum = 0
+	intervsinvest_score_sum = 0
 
 	cnt = 0
 	with open(filepath, 'w') as f:
@@ -149,6 +170,9 @@ def writetocsv(filepath, prices_ids, result_id):
 				log = Log.objects.get(result_id=result_id, wdate=price.wdate)
 				print "log already exists in db"
 			except:
+				intervsinvest_sum = total_interest / total_weight * 100
+				intervsinvest_index_sum = total_interest_index / total_index * 100
+				intervsinvest_score_sum = total_interest_score / total_score * 100
 				log = Log(
 					result_id = result_id, 
 					wdate = price.wdate, 
@@ -157,7 +181,10 @@ def writetocsv(filepath, prices_ids, result_id):
 					interest_index = interest_index,
 					interest_index_sum = total_interest_index,
 					interest_score = interest_score,
-					interest_score_sum = total_interest_score
+					interest_score_sum = total_interest_score,
+					intervsinvest_sum = intervsinvest_sum,
+					intervsinvest_index_sum = intervsinvest_index_sum,
+					intervsinvest_score_sum = intervsinvest_score_sum
 				)
 				log.save() 
 
@@ -198,36 +225,41 @@ def store(request):
 	e_date = request.POST.get("e_date")
 	# print s_date
 	# outcomes = Outcome.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
-	prices = Price.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
 
-	# Create path of file
-	filename = "insu_" + selected_code + '_' + s_date + "_to_" + e_date + ".csv"
-	filepath = join(settings.MEDIA_ROOT, filename)
-	print filepath
-
-	# for idx in prices.values_list('id', flat=True):
-	# 	print Price.objects.get(pk=idx).itemcode
-
-	# print outcomes
-	# cnt = 0
-	# for outcome in outcomes:
-	# 	cnt = cnt + 1
-	# 	print outcome.wdate
-
+	# 가격 데이터 없을시 에러처리 필요함 
 	try:
-		result = Result.objects.get(itemcode=selected_code, start_date=s_date, end_date=e_date)
-	except:
-		result = Result(
-			itemcode = selected_code, 
-			start_date = s_date, 
-			end_date = e_date
-		)
-		result.save() 
+		prices = Price.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
 
-	# outcomes_ids = tuple(outcomes.values_list('id', flat=True))
-	prices_ids = tuple(prices.values_list('id', flat=True))
-	writetocsv(filepath, prices_ids, result.id)
-	# print cnt 
+		# Create path of file
+		filename = "insu_" + selected_code + '_' + s_date + "_to_" + e_date + ".csv"
+		filepath = join(settings.MEDIA_ROOT, filename)
+		print filepath
+
+		# for idx in prices.values_list('id', flat=True):
+		# 	print Price.objects.get(pk=idx).itemcode
+
+		# print outcomes
+		# cnt = 0
+		# for outcome in outcomes:
+		# 	cnt = cnt + 1
+		# 	print outcome.wdate
+
+		try:
+			result = Result.objects.get(itemcode=selected_code, start_date=s_date, end_date=e_date)
+		except:
+			result = Result(
+				itemcode = selected_code, 
+				start_date = s_date, 
+				end_date = e_date
+			)
+			result.save() 
+
+		# outcomes_ids = tuple(outcomes.values_list('id', flat=True))
+		prices_ids = tuple(prices.values_list('id', flat=True))
+		writetocsv(filepath, prices_ids, result.id)
+		# print cnt 
+	except:
+		print "price data dosen't exists"
 	
 	# return HttpResponse("store")
 	return HttpResponseRedirect(reverse('insu_index'))

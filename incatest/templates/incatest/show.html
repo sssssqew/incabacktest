@@ -11,7 +11,10 @@
 	<hr>
 	{% endif %}
 	</div>
+
 	<div class="col-md-8 col-md-offset-2">
+	<div id="chart"  style="margin-left:-2%;"></div>
+	<br><br><br><br>
 	{% if rows %}
 	<table class="table table-striped">
     <thead>
@@ -21,12 +24,15 @@
         <th>일간비중</th>
         <th>일간수익률</th>
         <th>누적 일간수익률</th>
+        <th>투자대비 수익률</th>
         <th>INDEX</th>
         <th>일간수익률(INDEX)</th>
         <th>누적 일간수익률(INDEX)</th>
+        <th>투자대비 수익률(INDEX)</th>
         <th>SCORE</th>
         <th>일간수익률(SCORE)</th>
         <th>누적 일간수익률(SCORE)</th>
+        <th>투자대비 수익률(SCORE)</th>
       </tr>
     </thead>
     <tbody>
@@ -37,18 +43,21 @@
         <td>{{ row.2 }}</td>
         <td>{{ row.3 }}</td>
         <td>{{ row.8 }}</td>
+        <td>{{ row.11 }}</td>
         <td>{{ row.4 }}</td>
         <td>{{ row.5 }}</td>
         <td>{{ row.9 }}</td>
+        <td>{{ row.12 }}</td>
         <td>{{ row.6 }}</td>
         <td>{{ row.7 }}</td>
         <td>{{ row.10 }}</td>
+        <td>{{ row.13 }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 	{% endif %}
-	<div id="chart"  style="margin-left:-5%;"></div>
+	
 	</div>
 	<br><br>
 	

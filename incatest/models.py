@@ -112,9 +112,12 @@ class Log(models.Model):
 	interest_score = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_score_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 
+	intervsinvest_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+	intervsinvest_index_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+	intervsinvest_score_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+
 class InterVSInvest(models.Model):
 	result = models.ForeignKey(Result)
-	# wdate = models.DateField(blank=True, null=True)
 	intervsinvest = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	intervsinvest_index = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	intervsinvest_score = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
