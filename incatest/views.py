@@ -21,33 +21,6 @@ from datetime import timedelta
 # Create your views here.
 def index(request):
 	cnt = 0
-	# outcomes = Outcome.objects.all()
-	# for outcome in outcomes:
-	# 	if cnt < 10:
-	# 		print " -------------------------- "
-	# 		print outcome.wdate
-	# 		print outcome.itemcode
-	# 		print outcome.DNA_score
-	# 		print outcome.DNA_index
-	# 		print outcome.probability
-	# 		print outcome.MAX_rate
-	# 		print outcome.MIN_rate
-	# 		print " ---------------------------- "
-
-	# prices = Price.objects.filter(itemcode='KLVL01V2101', wdate__range=['2015-04-20', '2015-05-10'])
-	# for price in prices:
-	# 	print " -------------------------- "
-	# 	print price.itemcode
-	# 	print price.wdate
-	# 	# print price.open
-	# 	# print price.high
-	# 	# print price.low
-	# 	print price.close
-	# 	print price.trading_volume
-	# 	print price.trading_value
-	# 	print " ---------------------------- "
-	# 	cnt = cnt + 1
-	# print type('2014-04-13')
 
 	files = []
 	for file in os.listdir(settings.MEDIA_ROOT):
@@ -75,10 +48,13 @@ def show(request, fname):
 	e_date = fnames[4]
 
 	result = Result.objects.get(itemcode=code, start_date=s_date, end_date=e_date)
+	print result.id
 	try:
 		IVSI = InterVSInvest.objects.get(result_id=result.id)
+		print "IVSI exists"
 	except:
 		IVSI = InterVSInvest()
+		print "IVSI dosen't exists"
 
 	with open(filepath, 'r') as f:
 		reader = list(csv.reader(f, delimiter=str(',')))
@@ -89,8 +65,8 @@ def show(request, fname):
 				# interest_index.append(row[5])
 				# interest_score.append(row[7])
 				log = Log.objects.get(result_id=result.id, wdate=row[1])
-				print log.wdate
-				print log.interest_sum
+				# print log.wdate
+				# print log.interest_sum
 				interest.append(str(log.interest_sum))
 				interest_index.append(str(log.interest_index_sum))
 				interest_score.append(str(log.interest_score_sum))
@@ -118,11 +94,9 @@ def create(request):
 
 	return render(request, "incatest/create.html", context)
 
-@background(queue='write-to-csv-5')
+@background(queue='inca-queue-csv')
 def writetocsv(filepath, prices_ids, result_id):
-	# outcomes = Price.objects.filter(id__in=outcomes_ids)
 	prices = Price.objects.filter(id__in=prices_ids)
-	# result = Result.objects.get(id=result_id)
 
 	total_interest = 0
 	total_weight = 0
@@ -165,18 +139,7 @@ def writetocsv(filepath, prices_ids, result_id):
 				total_interest_index += interest_index
 				total_interest_score += interest_score
 
-				# print "--------    score ----------"
-				# print adj_score
-				# print outcome.DNA_score
-				# print "--------    index ----------"
-				# print adj_index
-				# print outcome.DNA_index
-
-				# print "-----------------------------------------------"
-				# print outcome.wdate
 				cnt = cnt + 1
-				# print "----------- interest_score --------------------------------"
-				# print interest_score 
 			except:
 				print "outcome related to price doesn't exist"
 			# print price.wdate 

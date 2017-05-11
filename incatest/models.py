@@ -75,6 +75,10 @@ class Price(models.Model):
 
 	def getInterest(self):
 		next_item =  Price.objects.filter(wdate__gt=self.wdate).order_by('wdate').first()
+		print self.itemcode
+		print self.wdate
+		print next_item.close
+		print self.close
 		interest = (next_item.close-self.close)/self.close
 		return interest
 
