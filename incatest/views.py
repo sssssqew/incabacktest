@@ -76,7 +76,7 @@ def show(request, fname):
 				interest_score.append(str(log.interest_score_sum))
 
 				interest_IVSI.append(str(log.intervsinvest_sum))
-				interest_index_IVSI.append(str(log.intervsinvest_index))
+				interest_index_IVSI.append(str(log.intervsinvest_index_sum))
 				interest_score_IVSI.append(str(log.intervsinvest_score_sum))
 
 				#누적수익률 추가 
@@ -100,8 +100,9 @@ def show(request, fname):
 	interest_index_IVSI.insert(0, '투자대비 수익률(Index)')
 	interest_score_IVSI.insert(0, '투자대비 수익률(Score)')
 
-	columns = [date, interest, interest_index, interest_score, interest_IVSI, interest_index_IVSI, interest_score_IVSI]
-	context = {'columns': json.dumps(columns), 'rows':rows, 'IVSI':IVSI}
+	columns = [date, interest, interest_index, interest_score]
+	columns_sum = [date, interest_IVSI, interest_index_IVSI, interest_score_IVSI]
+	context = {'columns': json.dumps(columns), 'columns_sum': json.dumps(columns_sum), 'rows':rows, 'IVSI':IVSI}
 	return render(request, 'incatest/show.html', context)
 
 
