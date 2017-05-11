@@ -7,10 +7,11 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 
 from background_task import background
-from .models import Outcome, Price, Fund, File
+from .models import Outcome, Price, Fund, Result, Log
 
 import csv
 import json
+import re
 import os
 from os.path import join
 
@@ -66,15 +67,36 @@ def show(request, fname):
 
 	filename = fname + '.csv'
 	filepath = join(settings.MEDIA_ROOT, filename)
+
+	fnames = fname.split('_')
+	# print fnames
+	code = fnames[1]
+	s_date = fnames[2]
+	e_date = fnames[4]
+
+	result = Result.objects.get(itemcode=code, start_date=s_date, end_date=e_date)
+
 	with open(filepath, 'r') as f:
 		reader = list(csv.reader(f, delimiter=str(',')))
 		for row in reader: 
-			rows.append(row)
 			if row != reader[-1]:
 				date.append(row[1])
-				interest.append(row[2])
-				interest_index.append(row[5])
-				interest_score.append(row[7])
+				# interest.append(row[3])
+				# interest_index.append(row[5])
+				# interest_score.append(row[7])
+				log = Log.objects.get(result_id=result.id, wdate=row[1])
+				print log.wdate
+				print log.interest_sum
+				interest.append(str(log.interest_sum))
+				interest_index.append(str(log.interest_index_sum))
+				interest_score.append(str(log.interest_score_sum))
+
+				#누적수익률 추가 
+				row.append(str(log.interest_sum))
+				row.append(str(log.interest_index_sum))
+				row.append(str(log.interest_score_sum))
+
+			rows.append(row)
 
 	date.insert(0, 'x')
 	interest.insert(0, '일간수익률')
@@ -92,10 +114,11 @@ def create(request):
 
 	return render(request, "incatest/create.html", context)
 
-@background(queue='my-queue')
-def writetocsv(filepath, prices_ids):
+@background(queue='write-to-csv-3')
+def writetocsv(filepath, prices_ids, result_id):
 	# outcomes = Price.objects.filter(id__in=outcomes_ids)
 	prices = Price.objects.filter(id__in=prices_ids)
+	# result = Result.objects.get(id=result_id)
 
 	total_interest = 0
 	total_weight = 0
@@ -108,8 +131,9 @@ def writetocsv(filepath, prices_ids):
 	with open(filepath, 'w') as f:
 		writer = csv.writer(f, csv.excel)
 		for price in prices:
-			
+			interest = 0
 			interest = price.getInterest()
+			# print interest
 			total_interest += interest
 			total_weight += 10
 
@@ -148,8 +172,26 @@ def writetocsv(filepath, prices_ids):
 				print "outcome related to price doesn't exist"
 			# print price.wdate 
 			
-			writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, interest, 10, adj_index, interest_index, adj_score, interest_score])
-		writer.writerow([price.itemcode.encode('euc-kr'), "Total", total_interest, total_weight, total_index, total_interest_index, total_score, total_interest_score])
+			# save backtest result in db
+			try:
+				log = Log.objects.get(result_id=result_id, wdate=price.wdate)
+				print "log already exists in db"
+			except:
+				log = Log(
+					result_id = result_id, 
+					wdate = price.wdate, 
+					interest = interest,
+					interest_sum = total_interest,
+					interest_index = interest_index,
+					interest_index_sum = total_interest_index,
+					interest_score = interest_score,
+					interest_score_sum = total_interest_score
+				)
+				log.save() 
+
+			# save in file 
+			writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, 10, interest, adj_index, interest_index, adj_score, interest_score])
+		writer.writerow([price.itemcode.encode('euc-kr'), "Total", total_weight, total_interest, total_index, total_interest_index, total_score, total_interest_score])
 	# print cnt
 
 def store(request):
@@ -164,7 +206,7 @@ def store(request):
 	prices = Price.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
 
 	# Create path of file
-	filename = "insu_" + s_date + "_to_" + e_date + ".csv"
+	filename = "insu_" + selected_code + '_' + s_date + "_to_" + e_date + ".csv"
 	filepath = join(settings.MEDIA_ROOT, filename)
 	print filepath
 
@@ -177,9 +219,19 @@ def store(request):
 	# 	cnt = cnt + 1
 	# 	print outcome.wdate
 
+	try:
+		result = Result.objects.get(itemcode=selected_code, start_date=s_date, end_date=e_date)
+	except:
+		result = Result(
+			itemcode = selected_code, 
+			start_date = s_date, 
+			end_date = e_date
+		)
+		result.save() 
+
 	# outcomes_ids = tuple(outcomes.values_list('id', flat=True))
 	prices_ids = tuple(prices.values_list('id', flat=True))
-	writetocsv(filepath, prices_ids)
+	writetocsv(filepath, prices_ids, result.id)
 	# print cnt 
 	
 	# return HttpResponse("store")

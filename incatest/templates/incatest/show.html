@@ -2,19 +2,22 @@
 
 {% block content %}
 <div class="row">
-	<div class="col-md-6 col-md-offset-3">
+	<div class="col-md-8 col-md-offset-2">
 	{% if rows %}
 	<table class="table table-striped">
     <thead>
       <tr>
         <th>코드</th>
         <th>날짜</th>
-        <th>일간수익률</th>
         <th>일간비중</th>
+        <th>일간수익률</th>
+        <th>누적 일간수익률</th>
         <th>INDEX</th>
         <th>일간수익률(INDEX)</th>
+        <th>누적 일간수익률(INDEX)</th>
         <th>SCORE</th>
         <th>일간수익률(SCORE)</th>
+        <th>누적 일간수익률(SCORE)</th>
       </tr>
     </thead>
     <tbody>
@@ -24,18 +27,22 @@
         <td>{{ row.1 | safe }}</td>
         <td>{{ row.2 }}</td>
         <td>{{ row.3 }}</td>
+        <td>{{ row.8 }}</td>
         <td>{{ row.4 }}</td>
         <td>{{ row.5 }}</td>
+        <td>{{ row.9 }}</td>
         <td>{{ row.6 }}</td>
         <td>{{ row.7 }}</td>
+        <td>{{ row.10 }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 	{% endif %}
+	<div id="chart"  style="margin-left:-5%;"></div>
 	</div>
 	<br><br>
-	<div id="chart"  style="margin-top:7%;"></div>
+	
 </div>
 {% endblock %}
 

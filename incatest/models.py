@@ -8,14 +8,14 @@ import os
 
 # Create your models here.
 class Outcome(models.Model):
-	wdate = models.DateField(blank=True, null=True)
+	wdate = models.CharField(max_length=10, blank=True, null=True)
 	itemcode = models.CharField(max_length=20,  blank=True, null=True)
 	itemname = models.CharField(max_length=100,  blank=True, null=True)
 	DNA_score = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	DNA_index = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	probability = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
-	MAX_rate = models.IntegerField(default=0)
-	MIN_rate = models.IntegerField(default=0)
+	MAX_rate = models.IntegerField()
+	MIN_rate = models.IntegerField()
 
 	class Meta:
 		db_table = 'time_series_1Y_inverse'
@@ -53,13 +53,13 @@ class Outcome(models.Model):
 
 class Price(models.Model):
 	itemcode = models.CharField(max_length=20,  blank=True, null=True)
-	wdate = models.DateField(blank=True, null=True)
+	wdate = models.CharField(max_length=10, blank=True, null=True)
 	open = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 	high = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 	low = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
 	close = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
-	trading_volume = models.IntegerField(default=0)
-	trading_value = models.IntegerField(default=0)
+	trading_volume = models.IntegerField()
+	trading_value = models.IntegerField()
 
 	class Meta:
 		db_table = 'stock_data'
@@ -76,10 +76,7 @@ class Price(models.Model):
 	def getInterest(self):
 		next_item =  Price.objects.filter(wdate__gt=self.wdate).order_by('wdate').first()
 		interest = (next_item.close-self.close)/self.close
-		# print next_item.wdate
-		# print self.wdate
 		return interest
-
 
 
 class Fund(models.Model):
@@ -97,19 +94,27 @@ class Fund(models.Model):
 
 class Result(models.Model):
 	itemcode = models.CharField(max_length=20,  blank=True, null=True)
-	start_date = models.DateField(blank=True, null=True)
-	end_date = models.DateField(blank=True, null=True)
+	start_date = models.CharField(max_length=10, blank=True, null=True)
+	end_date = models.CharField(max_length=10, blank=True, null=True)
 
 
 class Log(models.Model):
 	result = models.ForeignKey(Result)
-	wdate = models.DateField(blank=True, null=True)
+	wdate = models.CharField(max_length=10, blank=True, null=True)
 	interest = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_index = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_index_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_score = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_score_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+
+# class InterVSInvest(models.Model):
+# 	result = models.ForeignKey(Result)
+# 	wdate = models.DateField(blank=True, null=True)
+# 	intervsinvest = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+# 	intervsinvest_index = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+# 	intervsinvest_score = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+
 
 
 
