@@ -92,9 +92,9 @@ def show(request, fname):
 				row.append(str(log.intervsinvest_index_sum))
 				row.append(str(log.intervsinvest_score_sum))
 			else:
-				iv = Decimal(row[3])
-				iv_index = Decimal(row[2])/Decimal(row[4])*Decimal(row[5])
-				iv_score = Decimal(row[2])/Decimal(row[6])*Decimal(row[7])
+				iv = Decimal(row[3]) 
+				iv_index = Decimal(row[2])/Decimal(row[4])*Decimal(row[5]) 
+				iv_score = Decimal(row[2])/Decimal(row[6])*Decimal(row[7]) 
 				ivsi.append(iv)
 				ivsi.append(iv_index)
 				ivsi.append(iv_score)

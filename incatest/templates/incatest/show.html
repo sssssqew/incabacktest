@@ -2,17 +2,17 @@
 
 {% block content %}
 <div class="row">
-	<div class="col-md-12">
+	<div class="col-md-10 col-md-offset-1">
 	{% if IVSI %}
 	<!-- <hr> -->
-		<h4>보유수익률 : {{ IVSI.0 }} %</h4>
-		<h4>DNA-리스크 based 수익률 : {{ IVSI.1 }} %</h4>
-		<h4>DNA-리턴 based 수익률 : {{ IVSI.2 }} %</h4>
+		<h4>보유수익률 : {{ IVSI.0 |floatformat:10 }} %</h4>
+		<h4>DNA-리스크 based 수익률 : {{ IVSI.1 |floatformat:10 }} %</h4>
+		<h4>DNA-리턴 based 수익률 : {{ IVSI.2 |floatformat:10 }} %</h4>
 	<hr>
 	{% endif %}
 	</div>
 
-	<div class="col-md-12">
+	<div class="col-md-10 col-md-offset-1">
 	<!-- <div id="chart1"  style="margin-left:-2%;"></div> -->
 	<br><br><br>
 	<div id="chart2"  style="margin-left:-2%;"></div>
@@ -23,7 +23,7 @@
       <tr>
         <th>코드</th>
         <th>날짜</th>
-        <th>일간비중</th>
+        <th>투자금액</th>
         <th>일간수익률</th>
         <th>누적 일간수익률</th>
         <th>보유수익률</th>
@@ -42,18 +42,18 @@
       <tr>
         <td>{{ row.0 | safe }}</td>
         <td>{{ row.1 | safe }}</td>
-        <td>{{ row.2 }}</td>
-        <td>{{ row.3 }}</td>
-        <td>{{ row.8 }}</td>
-        <td>{{ row.11 }}</td>
-        <td>{{ row.4 }}</td>
-        <td>{{ row.5 }}</td>
-        <td>{{ row.9 }}</td>
-        <td>{{ row.12 }}</td>
-        <td>{{ row.6 }}</td>
-        <td>{{ row.7 }}</td>
-        <td>{{ row.10 }}</td>
-        <td>{{ row.13 }}</td>
+        <td>{{ row.2 |floatformat:5 }}</td>
+        <td>{{ row.3 |floatformat:5 }}</td>
+        <td>{{ row.8 |floatformat:5 }}</td>
+        <td>{{ row.11 |floatformat:5 }}</td>
+        <td>{{ row.4 |floatformat:5 }}</td>
+        <td>{{ row.5 |floatformat:5 }}</td>
+        <td>{{ row.9 |floatformat:5 }}</td>
+        <td>{{ row.12 |floatformat:5 }}</td>
+        <td>{{ row.6 |floatformat:5 }}</td>
+        <td>{{ row.7 |floatformat:5 }}</td>
+        <td>{{ row.10 |floatformat:5 }}</td>
+        <td>{{ row.13 |floatformat:5 }}</td>
       </tr>
       {% endfor %}
     </tbody>
