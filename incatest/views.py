@@ -106,9 +106,9 @@ def show(request, fname):
 	interest_index.insert(0, '누적 일간수익률(Index)')
 	interest_score.insert(0, '누적 일간수익률(Score)')
 
-	interest_IVSI.insert(0, '투자대비 수익률')
-	interest_index_IVSI.insert(0, '투자대비 수익률(Index)')
-	interest_score_IVSI.insert(0, '투자대비 수익률(Score)')
+	interest_IVSI.insert(0, '보유수익률')
+	interest_index_IVSI.insert(0, 'DNA-리스크 based 수익률')
+	interest_score_IVSI.insert(0, 'DNA-리턴 based 수익률')
 
 	columns = [date, interest, interest_index, interest_score]
 	columns_sum = [date, interest_IVSI, interest_index_IVSI, interest_score_IVSI]
@@ -147,8 +147,13 @@ def writetocsv(filepath, prices_ids, result_id):
 		writer = csv.writer(f, csv.excel)
 		for price in prices:
 			interest = 0
-			interest = price.getInterest()
-			# print interest
+			next_item =  Price.objects.filter(itemcode=price.itemcode, wdate__gt=price.wdate).order_by('wdate').first()
+			current_price = price.getInterest()
+			print current_price
+			print next_item.close
+			interest = (next_item.close - current_price) / current_price
+			print interest
+			print total_interest
 			total_interest += interest
 			total_weight += 10
 
@@ -178,6 +183,9 @@ def writetocsv(filepath, prices_ids, result_id):
 			
 			# save backtest result in db
 			try:
+				intervsinvest_sum = total_interest
+				intervsinvest_index_sum = (total_weight / total_index) * total_interest_index
+				intervsinvest_score_sum = (total_weight / total_score) * total_interest_score
 				log = Log.objects.get(result_id=result_id, wdate=price.wdate)
 				log.interest = interest
 				log.interest_sum = total_interest

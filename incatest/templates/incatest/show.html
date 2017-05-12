@@ -2,18 +2,18 @@
 
 {% block content %}
 <div class="row">
-	<div class="col-md-10 col-md-offset-1">
+	<div class="col-md-12">
 	{% if IVSI %}
 	<!-- <hr> -->
-		<h4>투자대비 수익률 : {{ IVSI.0 }} %</h4>
-		<h4>투자대비 수익률(INDEX) : {{ IVSI.1 }} %</h4>
-		<h4>투자대비 수익률(SCORE) : {{ IVSI.2 }} %</h4>
+		<h4>보유수익률 : {{ IVSI.0 }} %</h4>
+		<h4>DNA-리스크 based 수익률 : {{ IVSI.1 }} %</h4>
+		<h4>DNA-리턴 based 수익률 : {{ IVSI.2 }} %</h4>
 	<hr>
 	{% endif %}
 	</div>
 
-	<div class="col-md-10 col-md-offset-1">
-	<div id="chart1"  style="margin-left:-2%;"></div>
+	<div class="col-md-12">
+	<!-- <div id="chart1"  style="margin-left:-2%;"></div> -->
 	<br><br><br>
 	<div id="chart2"  style="margin-left:-2%;"></div>
 	<br><br><br><br>
@@ -26,15 +26,15 @@
         <th>일간비중</th>
         <th>일간수익률</th>
         <th>누적 일간수익률</th>
-        <th>투자대비 수익률</th>
-        <th>INDEX</th>
-        <th>일간수익률(INDEX)</th>
-        <th>누적 일간수익률(INDEX)</th>
-        <th>투자대비 수익률(INDEX)</th>
-        <th>SCORE</th>
-        <th>일간수익률(SCORE)</th>
-        <th>누적 일간수익률(SCORE)</th>
-        <th>투자대비 수익률(SCORE)</th>
+        <th>보유수익률</th>
+        <th>DNA-리스크 based 비중</th>
+        <th>일간수익률</th>
+        <th>누적 일간수익률</th>
+        <th>DNA-리스크 based 수익률</th>
+        <th>DNA-리턴 based 비중</th>
+        <th>일간수익률</th>
+        <th>누적 일간수익률</th>
+        <th>DNA-리턴 based 수익률</th>
       </tr>
     </thead>
     <tbody>

@@ -74,13 +74,13 @@ class Price(models.Model):
 		return self.itemcode.encode('utf-8')
 
 	def getInterest(self):
-		next_item =  Price.objects.filter(wdate__gt=self.wdate).order_by('wdate').first()
-		print self.itemcode
-		print self.wdate
-		print next_item.close
-		print self.close
-		interest = (next_item.close-self.close)/self.close
-		return interest
+		# next_item =  Price.objects.filter(itemcode=self.itemcode, wdate__gt=self.wdate).order_by('wdate').first()
+		# print self.itemcode
+		# print self.wdate
+		# print next_item.close
+		# print self.close
+		# interest = (next_item.close-self.close)/self.close
+		return self.close
 
 
 class Fund(models.Model):
