@@ -17,6 +17,7 @@ from os.path import join
 
 from datetime import datetime
 from datetime import timedelta
+from decimal import *
 
 # Create your views here.
 def index(request):
@@ -42,6 +43,8 @@ def show(request, fname):
 	interest_index_IVSI = []
 	interest_score_IVSI = []
 
+	ivsi = []
+
 	filename = fname + '.csv'
 	filepath = join(settings.MEDIA_ROOT, filename)
 
@@ -53,12 +56,12 @@ def show(request, fname):
 
 	result = Result.objects.get(itemcode=code, start_date=s_date, end_date=e_date)
 	print result.id
-	try:
-		IVSI = InterVSInvest.objects.get(result_id=result.id)
-		print "IVSI exists"
-	except:
-		IVSI = InterVSInvest()
-		print "IVSI dosen't exists"
+	# try:
+	# 	IVSI = InterVSInvest.objects.get(result_id=result.id)
+	# 	print "IVSI exists"
+	# except:
+	# 	IVSI = InterVSInvest()
+	# 	print "IVSI dosen't exists"
 
 	with open(filepath, 'r') as f:
 		reader = list(csv.reader(f, delimiter=str(',')))
@@ -88,6 +91,13 @@ def show(request, fname):
 				row.append(str(log.intervsinvest_sum))
 				row.append(str(log.intervsinvest_index_sum))
 				row.append(str(log.intervsinvest_score_sum))
+			else:
+				iv = Decimal(row[3])
+				iv_index = Decimal(row[2])/Decimal(row[4])*Decimal(row[5])
+				iv_score = Decimal(row[2])/Decimal(row[6])*Decimal(row[7])
+				ivsi.append(iv)
+				ivsi.append(iv_index)
+				ivsi.append(iv_score)
 
 			rows.append(row)
 
@@ -102,7 +112,7 @@ def show(request, fname):
 
 	columns = [date, interest, interest_index, interest_score]
 	columns_sum = [date, interest_IVSI, interest_index_IVSI, interest_score_IVSI]
-	context = {'columns': json.dumps(columns), 'columns_sum': json.dumps(columns_sum), 'rows':rows, 'IVSI':IVSI}
+	context = {'columns': json.dumps(columns), 'columns_sum': json.dumps(columns_sum), 'rows':rows, 'IVSI':ivsi}
 	return render(request, 'incatest/show.html', context)
 
 
@@ -112,7 +122,7 @@ def create(request):
 
 	return render(request, "incatest/create.html", context)
 
-@background(queue='inca-queue-csv-5')
+@background(queue='backtest')
 def writetocsv(filepath, prices_ids, result_id):
 	prices = Price.objects.filter(id__in=prices_ids)
 
@@ -169,11 +179,26 @@ def writetocsv(filepath, prices_ids, result_id):
 			# save backtest result in db
 			try:
 				log = Log.objects.get(result_id=result_id, wdate=price.wdate)
-				print "log already exists in db"
+				log.interest = interest
+				log.interest_sum = total_interest
+				log.interest_index = interest_index
+				log.interest_index_sum = total_interest_index
+				log.interest_score = interest_score
+				log.interest_score_sum = total_interest_score
+				log.intervsinvest_sum = intervsinvest_sum
+				log.intervsinvest_index_sum = intervsinvest_index_sum
+				log.intervsinvest_score_sum = intervsinvest_score_sum
+				log.save(update_fields=['interest', 
+							'interest_sum', 'interest_index', 'interest_index_sum', 'interest_score', 'interest_score_sum', 
+							'intervsinvest_sum', 'intervsinvest_index_sum', 'intervsinvest_score_sum'])
+				print "log updated in db"
 			except:
-				intervsinvest_sum = (total_interest * total_weight) /  total_weight
-				intervsinvest_index_sum = (total_interest_index * total_index) / total_weight
-				intervsinvest_score_sum = (total_interest_score * total_score) / total_weight
+				# intervsinvest_sum = (total_interest * total_weight) /  total_weight
+				# intervsinvest_index_sum = (total_interest_index * total_index) / total_weight
+				# intervsinvest_score_sum = (total_interest_score * total_score) / total_weight
+				intervsinvest_sum = total_interest
+				intervsinvest_index_sum = (total_weight / total_index) * total_interest_index
+				intervsinvest_score_sum = (total_weight / total_score) * total_interest_score 
 				log = Log(
 					result_id = result_id, 
 					wdate = price.wdate, 
@@ -188,32 +213,46 @@ def writetocsv(filepath, prices_ids, result_id):
 					intervsinvest_score_sum = intervsinvest_score_sum
 				)
 				log.save() 
+				print "log saved in db"
 
 			# save in file 
 			writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, 10, interest, adj_index, interest_index, adj_score, interest_score])
 
-		# 투자대비 수익률 계산
-		intervsinvest = (total_interest * total_weight) /  total_weight
-		intervsinvest_index = (total_interest_index * total_index) / total_weight
-		intervsinvest_score = (total_interest_score * total_score) / total_weight
-
-		# save backtest result in db
-		try:
-			IVSI = InterVSInvest.objects.get(result_id=result_id)
-			print "IVSI already exists in db"
-		except:
-			IVSI = InterVSInvest(
-				result_id = result_id, 
-				intervsinvest = intervsinvest,
-				intervsinvest_index = intervsinvest_index,
-				intervsinvest_score = intervsinvest_score
-			)
-			IVSI.save()
-			print "IVSI saved in db"
-
 		writer.writerow([price.itemcode.encode('euc-kr'), "Total", total_weight, total_interest, total_index, total_interest_index, total_score, total_interest_score])
 
-		
+		# 투자대비 수익률 계산
+		# intervsinvest = (total_interest * total_weight) /  total_weight
+		# intervsinvest_index = (total_interest_index * total_index) / total_weight
+		# intervsinvest_score = (total_interest_score * total_score) / total_weight
+
+		# intervsinvest = total_interest
+		# intervsinvest_index = (Decimal(total_weight) / total_index) * total_interest_index 
+		# intervsinvest_score = (Decimal(total_weight) / total_score) * total_interest_score 
+
+		# print total_weight
+		# print total_index
+		# print total_interest_index
+		# print total_score
+		# print total_interest_score
+
+		# save backtest result in db
+		# try:
+		# 	IVSI = InterVSInvest.objects.get(result_id=result_id)
+		# 	# IVSI.intervsinvest = intervsinvest
+		# 	# IVSI.intervsinvest_index = intervsinvest_index
+		# 	# IVSI.intervsinvest_score = intervsinvest_score
+		# 	# IVSI.save(update_fields=['intervsinvest', 
+		# 	# 				'intervsinvest_index', 'intervsinvest_score'])
+		# 	print "IVSI exists in db"
+		# except:
+		# 	IVSI = InterVSInvest(
+		# 		result_id = result_id, 
+		# 		intervsinvest = intervsinvest,
+		# 		intervsinvest_index = intervsinvest_index,
+		# 		intervsinvest_score = intervsinvest_score
+		# 	)
+		# 	IVSI.save()
+		# 	print "IVSI saved in db"
 
 	# print cnt
 
