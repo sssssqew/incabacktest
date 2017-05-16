@@ -88,16 +88,20 @@ def show(request, fname):
 				row.append(str(log.interest_sum))
 				row.append(str(log.interest_index_sum))
 				row.append(str(log.interest_score_sum))
+				row.append(str(log.interest_index_score_sum))
 
 				#투자대비 수익률 
 				row.append(str(log.intervsinvest_sum))
 				row.append(str(log.intervsinvest_index_sum))
 				row.append(str(log.intervsinvest_score_sum))
+				row.append(str(log.intervsinvest_index_score_sum))
+
 			else:
+				print row
 				iv = str(Decimal(row[3]) * 100) 
-				iv_index = str(Decimal(row[2])/Decimal(row[4])*Decimal(row[5]) * 100)
-				iv_score = str(Decimal(row[2])/Decimal(row[6])*Decimal(row[7]) * 100)
-				iv_index_score = str(Decimal(row[2])/Decimal(row[8])*Decimal(row[9]) * 100)
+				iv_index = str(Decimal(row[2])/Decimal(row[6])*Decimal(row[7]) * 100)
+				iv_score = str(Decimal(row[2])/Decimal(row[10])*Decimal(row[11]) * 100)
+				iv_index_score = str(Decimal(row[2])/Decimal(row[14])*Decimal(row[15]) * 100)
 				ivsi.append(iv)
 				ivsi.append(iv_index)
 				ivsi.append(iv_score)
@@ -250,7 +254,7 @@ def writetocsv(filepath, prices_ids, result_id):
 				writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, 10, interest, adj_index, interest_index, adj_score, interest_score, adj_score_index, interest_score_index])
 			else:
 				break
-		writer.writerow([price.itemcode.encode('euc-kr'), "Total", total_weight, total_interest, total_index, total_interest_index, total_score, total_interest_score, total_index_score, total_interest_index_score])
+		writer.writerow([price.itemcode.encode('euc-kr'), "Total", total_weight, total_interest, '', '', total_index, total_interest_index, '', '', total_score, total_interest_score, '', '', total_index_score, total_interest_index_score])
 
 		# 투자대비 수익률 계산
 		# intervsinvest = (total_interest * total_weight) /  total_weight
