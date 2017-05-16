@@ -305,6 +305,8 @@ def store(request):
 	# 가격 데이터 없을시 에러처리 필요함 
 	try:
 		prices = Price.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
+		# for price in prices:
+		# 	print price.wdate
 
 		# Create path of file
 		filename = "insu_" + selected_code + '_' + s_date + "_to_" + e_date + ".csv"
@@ -329,6 +331,8 @@ def store(request):
 				end_date = e_date
 			)
 			result.save() 
+
+		# print "sylee"
 
 		# outcomes_ids = tuple(outcomes.values_list('id', flat=True))
 		prices_ids = tuple(prices.values_list('id', flat=True))
