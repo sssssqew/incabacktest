@@ -42,6 +42,7 @@ def show(request, fname):
 	interest_IVSI = []
 	interest_index_IVSI = []
 	interest_score_IVSI = []
+	interest_index_score_IVSI = []
 
 	ivsi = []
 
@@ -81,6 +82,7 @@ def show(request, fname):
 				interest_IVSI.append(str(log.intervsinvest_sum))
 				interest_index_IVSI.append(str(log.intervsinvest_index_sum))
 				interest_score_IVSI.append(str(log.intervsinvest_score_sum))
+				interest_index_score_IVSI.append(str(log.intervsinvest_index_score_sum))
 
 				#누적수익률 추가 
 				row.append(str(log.interest_sum))
@@ -92,12 +94,14 @@ def show(request, fname):
 				row.append(str(log.intervsinvest_index_sum))
 				row.append(str(log.intervsinvest_score_sum))
 			else:
-				iv = str(Decimal(row[3])) 
-				iv_index = str(Decimal(row[2])/Decimal(row[4])*Decimal(row[5]))
-				iv_score = str(Decimal(row[2])/Decimal(row[6])*Decimal(row[7]))
+				iv = str(Decimal(row[3]) * 100) 
+				iv_index = str(Decimal(row[2])/Decimal(row[4])*Decimal(row[5]) * 100)
+				iv_score = str(Decimal(row[2])/Decimal(row[6])*Decimal(row[7]) * 100)
+				iv_index_score = str(Decimal(row[2])/Decimal(row[8])*Decimal(row[9]) * 100)
 				ivsi.append(iv)
 				ivsi.append(iv_index)
 				ivsi.append(iv_score)
+				ivsi.append(iv_index_score)
 
 			rows.append(row)
 
@@ -109,9 +113,10 @@ def show(request, fname):
 	interest_IVSI.insert(0, '보유수익률')
 	interest_index_IVSI.insert(0, 'DNA-리스크 based 수익률')
 	interest_score_IVSI.insert(0, 'DNA-리턴 based 수익률')
+	interest_index_score_IVSI.insert(0, 'DNA-리턴-리스크 based 수익률')
 
 	columns = [date, interest, interest_index, interest_score]
-	columns_sum = [date, interest_IVSI, interest_index_IVSI, interest_score_IVSI]
+	columns_sum = [date, interest_IVSI, interest_index_IVSI, interest_score_IVSI, interest_index_score_IVSI]
 	context = {'columns': json.dumps(columns), 'columns_sum': json.dumps(columns_sum), 'rows':rows, 'IVSI':ivsi}
 	return render(request, 'incatest/show.html', context)
 
@@ -132,6 +137,8 @@ def writetocsv(filepath, prices_ids, result_id):
 	total_interest_index = 0
 	total_score = 0
 	total_interest_score = 0
+	total_index_score = 0
+	total_interest_index_score = 0
 
 	# 투자대비 수익률 변수 
 	intervsinvest = 0
@@ -163,20 +170,26 @@ def writetocsv(filepath, prices_ids, result_id):
 				adj_index = 0
 				interest_score = 0
 				interest_index = 0
+				interest_score_index = 0
 			
 				try:
 					outcome = Outcome.objects.get(wdate=price.wdate, itemcode=price.itemcode)
 					adj_score = outcome.adjustScore()
 					adj_index = outcome.adjustIndex()
 
+					adj_score_index = (adj_score + adj_index) / 2
+
 					interest_score = (interest * adj_score)/10
 					interest_index = (interest * adj_index)/10
+					interest_score_index = (interest * adj_score_index) / 10
 
 					total_score += adj_score
 					total_index += adj_index
+					total_index_score += adj_score_index
 
 					total_interest_index += interest_index
 					total_interest_score += interest_score
+					total_interest_index_score += interest_score_index
 
 					cnt = cnt + 1
 				except:
@@ -188,6 +201,7 @@ def writetocsv(filepath, prices_ids, result_id):
 					intervsinvest_sum = total_interest
 					intervsinvest_index_sum = (total_weight / total_index) * total_interest_index
 					intervsinvest_score_sum = (total_weight / total_score) * total_interest_score
+					intervsinvest_index_score_sum = (total_weight / total_index_score) * total_interest_index_score
 					log = Log.objects.get(result_id=result_id, wdate=price.wdate)
 					log.interest = interest
 					log.interest_sum = total_interest
@@ -195,12 +209,15 @@ def writetocsv(filepath, prices_ids, result_id):
 					log.interest_index_sum = total_interest_index
 					log.interest_score = interest_score
 					log.interest_score_sum = total_interest_score
+					log.interest_index_score = interest_score_index
+					log.interest_index_score_sum = total_interest_index_score
 					log.intervsinvest_sum = intervsinvest_sum
 					log.intervsinvest_index_sum = intervsinvest_index_sum
 					log.intervsinvest_score_sum = intervsinvest_score_sum
+					log.intervsinvest_index_score_sum = intervsinvest_index_score_sum
 					log.save(update_fields=['interest', 
 								'interest_sum', 'interest_index', 'interest_index_sum', 'interest_score', 'interest_score_sum', 
-								'intervsinvest_sum', 'intervsinvest_index_sum', 'intervsinvest_score_sum'])
+								'interest_index_score', 'interest_index_score_sum', 'intervsinvest_sum', 'intervsinvest_index_sum', 'intervsinvest_score_sum', 'intervsinvest_index_score_sum'])
 					print "log updated in db"
 				except:
 					# intervsinvest_sum = (total_interest * total_weight) /  total_weight
@@ -209,6 +226,7 @@ def writetocsv(filepath, prices_ids, result_id):
 					intervsinvest_sum = total_interest
 					intervsinvest_index_sum = (total_weight / total_index) * total_interest_index
 					intervsinvest_score_sum = (total_weight / total_score) * total_interest_score 
+					intervsinvest_index_score_sum = (total_weight / total_index_score) * total_interest_index_score
 					log = Log(
 						result_id = result_id, 
 						wdate = price.wdate, 
@@ -218,18 +236,21 @@ def writetocsv(filepath, prices_ids, result_id):
 						interest_index_sum = total_interest_index,
 						interest_score = interest_score,
 						interest_score_sum = total_interest_score,
+						interest_index_score = interest_score_index,
+						interest_index_score_sum = total_interest_index_score,
 						intervsinvest_sum = intervsinvest_sum,
 						intervsinvest_index_sum = intervsinvest_index_sum,
-						intervsinvest_score_sum = intervsinvest_score_sum
+						intervsinvest_score_sum = intervsinvest_score_sum,
+						intervsinvest_index_score_sum = intervsinvest_index_score_sum
 					)
 					log.save() 
 					print "log saved in db"
 
 				# save in file 
-				writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, 10, interest, adj_index, interest_index, adj_score, interest_score])
+				writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, 10, interest, adj_index, interest_index, adj_score, interest_score, adj_score_index, interest_score_index])
 			else:
 				break
-		writer.writerow([price.itemcode.encode('euc-kr'), "Total", total_weight, total_interest, total_index, total_interest_index, total_score, total_interest_score])
+		writer.writerow([price.itemcode.encode('euc-kr'), "Total", total_weight, total_interest, total_index, total_interest_index, total_score, total_interest_score, total_index_score, total_interest_index_score])
 
 		# 투자대비 수익률 계산
 		# intervsinvest = (total_interest * total_weight) /  total_weight
