@@ -44,28 +44,6 @@
     </thead>
     <tbody>
         {% for row in rows %}
-        {% if not forloop.last %}
-      <tr>
-        <td>{{ row.0 | safe }}</td>
-        <td>{{ row.1 | safe }}</td>
-        <td>{{ row.2 |floatformat:5 }}</td>
-        <td>{{ row.3 |floatformat:5 }}</td>
-        <td>{{ row.10 |floatformat:5 }}</td>
-        <td>{{ row.14 |floatformat:5 }}</td>
-        <td>{{ row.4 |floatformat:5 }}</td>
-        <td>{{ row.5 |floatformat:5 }}</td>
-        <td>{{ row.11 |floatformat:5 }}</td>
-        <td>{{ row.15 |floatformat:5 }}</td>
-        <td>{{ row.6 |floatformat:5 }}</td>
-        <td>{{ row.7 |floatformat:5 }}</td>
-        <td>{{ row.12 |floatformat:5 }}</td>
-        <td>{{ row.16 |floatformat:5 }}</td>
-        <td>{{ row.8 |floatformat:5 }}</td>
-        <td>{{ row.9 |floatformat:5 }}</td>
-        <td>{{ row.13 |floatformat:5 }}</td>
-        <td>{{ row.17 |floatformat:5 }}</td>
-      </tr>
-      {% else %}
       <tr>
         <td>{{ row.0 | safe }}</td>
         <td>{{ row.1 | safe }}</td>
@@ -86,7 +64,6 @@
         <td>{{ row.16 |floatformat:5 }}</td>
         <td>{{ row.17 |floatformat:5 }}</td>
       </tr>
-      {% endif %}
       {% endfor %}
     </tbody>
   </table>
@@ -100,36 +77,36 @@
 
 
 {% block script %}
-{% if columns %}
+{% if columns_sum %}
 <script type="text/javascript">
-    var columns_json = '{{ columns | safe }}';
-    console.log(columns_json);
-    var col = JSON.parse(columns_json);
-    console.log(col);
+    // var columns_json = '{{ columns | safe }}';
+    // console.log(columns_json);
+    // var col = JSON.parse(columns_json);
+    // console.log(col);
 
-    var chart1 = c3.generate({
-    	bindto: '#chart1',
-        data: {
-            x: 'x',
-            columns: col
-        },
-        axis: {
-            x: {
-                type: 'timeseries',
-                tick: {
-                    format: '%Y-%m-%d'
-                }
-            }
-        },
-        grid: {
-            x: {
-                show: true
-            },
-            y: {
-                show: true
-            }
-        }
-    });
+    // var chart1 = c3.generate({
+    // 	bindto: '#chart1',
+    //     data: {
+    //         x: 'x',
+    //         columns: col
+    //     },
+    //     axis: {
+    //         x: {
+    //             type: 'timeseries',
+    //             tick: {
+    //                 format: '%Y-%m-%d'
+    //             }
+    //         }
+    //     },
+    //     grid: {
+    //         x: {
+    //             show: true
+    //         },
+    //         y: {
+    //             show: true
+    //         }
+    //     }
+    // });
 
     var columns_json_sum = '{{ columns_sum | safe }}';
     console.log(columns_json_sum);

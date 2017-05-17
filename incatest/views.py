@@ -35,9 +35,9 @@ def show(request, fname):
 	rows = []
 
 	date = []
-	interest = []
-	interest_index = []
-	interest_score = []
+	# interest = []
+	# interest_index = []
+	# interest_score = []
 
 	interest_IVSI = []
 	interest_index_IVSI = []
@@ -68,6 +68,7 @@ def show(request, fname):
 		reader = list(csv.reader(f, delimiter=str(',')))
 		for row in reader: 
 			if row != reader[-1]:
+				# print row
 				date.append(row[1])
 				# interest.append(row[3])
 				# interest_index.append(row[5])
@@ -75,26 +76,26 @@ def show(request, fname):
 				log = Log.objects.get(result_id=result.id, wdate=row[1])
 				# print log.wdate
 				# print log.interest_sum
-				interest.append(str(log.interest_sum))
-				interest_index.append(str(log.interest_index_sum))
-				interest_score.append(str(log.interest_score_sum))
+				# interest.append(str(log.interest_sum))
+				# interest_index.append(str(log.interest_index_sum))
+				# interest_score.append(str(log.interest_score_sum))
 
 				interest_IVSI.append(str(log.intervsinvest_sum))
 				interest_index_IVSI.append(str(log.intervsinvest_index_sum))
 				interest_score_IVSI.append(str(log.intervsinvest_score_sum))
 				interest_index_score_IVSI.append(str(log.intervsinvest_index_score_sum))
 
-				#누적수익률 추가 
-				row.append(str(log.interest_sum))
-				row.append(str(log.interest_index_sum))
-				row.append(str(log.interest_score_sum))
-				row.append(str(log.interest_index_score_sum))
+				# #누적수익률 추가 
+				# row.append(str(log.interest_sum))
+				# row.append(str(log.interest_index_sum))
+				# row.append(str(log.interest_score_sum))
+				# row.append(str(log.interest_index_score_sum))
 
-				#투자대비 수익률 
-				row.append(str(log.intervsinvest_sum))
-				row.append(str(log.intervsinvest_index_sum))
-				row.append(str(log.intervsinvest_score_sum))
-				row.append(str(log.intervsinvest_index_score_sum))
+				# #투자대비 수익률 
+				# row.append(str(log.intervsinvest_sum))
+				# row.append(str(log.intervsinvest_index_sum))
+				# row.append(str(log.intervsinvest_score_sum))
+				# row.append(str(log.intervsinvest_index_score_sum))
 
 			else:
 				print row
@@ -110,18 +111,18 @@ def show(request, fname):
 			rows.append(row)
 
 	date.insert(0, 'x')
-	interest.insert(0, '누적 일간수익률')
-	interest_index.insert(0, '누적 일간수익률(Index)')
-	interest_score.insert(0, '누적 일간수익률(Score)')
+	# interest.insert(0, '누적 일간수익률')
+	# interest_index.insert(0, '누적 일간수익률(Index)')
+	# interest_score.insert(0, '누적 일간수익률(Score)')
 
 	interest_IVSI.insert(0, '보유수익률')
 	interest_index_IVSI.insert(0, 'DNA-리스크 based 수익률')
 	interest_score_IVSI.insert(0, 'DNA-리턴 based 수익률')
 	interest_index_score_IVSI.insert(0, 'DNA-리턴-리스크 based 수익률')
 
-	columns = [date, interest, interest_index, interest_score]
+	# columns = [date, interest, interest_index, interest_score]
 	columns_sum = [date, interest_IVSI, interest_index_IVSI, interest_score_IVSI, interest_index_score_IVSI]
-	context = {'columns': json.dumps(columns), 'columns_sum': json.dumps(columns_sum), 'rows':rows, 'IVSI':ivsi}
+	context = {'columns_sum': json.dumps(columns_sum), 'rows':rows, 'IVSI':ivsi}
 	return render(request, 'incatest/show.html', context)
 
 
@@ -284,11 +285,19 @@ def writetocsv(s_date, e_date, selected_code):
 						print "outcome related to price doesn't exist"
 					
 					# save in file 
-					writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, 10, interest, adj_index, interest_index, adj_score, interest_score, adj_score_index, interest_score_index])
+					writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, 
+						10, interest, total_interest, intervsinvest_sum, 
+						adj_index, interest_index, total_interest_index, intervsinvest_index_sum,
+						adj_score, interest_score, total_interest_score, intervsinvest_score_sum,
+						adj_score_index, interest_score_index, total_interest_index_score, intervsinvest_index_score_sum])
 				else:
 					print "next price does not exist"
 					break
-			writer.writerow([price.itemcode.encode('euc-kr'), "Total", total_weight, total_interest, '', '', total_index, total_interest_index, '', '', total_score, total_interest_score, '', '', total_index_score, total_interest_index_score])
+			writer.writerow([price.itemcode.encode('euc-kr'), "Total", 
+				total_weight, total_interest, '', '', 
+				total_index, total_interest_index, '', '', 
+				total_score, total_interest_score, '', '', 
+				total_index_score, total_interest_index_score])
 	else:
 		print "prices or outcomes does not exist"
 		# 투자대비 수익률 계산
