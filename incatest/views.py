@@ -132,130 +132,165 @@ def create(request):
 	return render(request, "incatest/create.html", context)
 
 @background(queue='backtest')
-def writetocsv(filepath, prices_ids, result_id):
-	prices = Price.objects.filter(id__in=prices_ids)
+def writetocsv(s_date, e_date, selected_code):
+	# Create path of file
+	filename = "insu_" + selected_code + '_' + s_date + "_to_" + e_date + ".csv"
+	filepath = join(settings.MEDIA_ROOT, filename)
+	print filepath
 
-	total_interest = 0
-	total_weight = 0
-	total_index = 0
-	total_interest_index = 0
-	total_score = 0
-	total_interest_score = 0
-	total_index_score = 0
-	total_interest_index_score = 0
+   # get prices
+	try:
+		prices = Price.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
+		prices = prices.order_by('wdate')
+	except:
+		print "prices does not exist"
 
-	# 투자대비 수익률 변수 
-	intervsinvest = 0
-	intervsinvest_index = 0
-	intervsinvest_score = 0
+	# get outcomes
+	try:
+		outcomes = Outcome.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
+		outcomes = outcomes.order_by('wdate')
+		print outcomes.wdate
+	except:
+		print "outcomes does not exist"
 
-	intervsinvest_sum = 0
-	intervsinvest_index_sum = 0
-	intervsinvest_score_sum = 0
+	# run test only if both prices and outcomes exist  
+	if prices and outcomes:
+		# create model to save backtest results
+		try:
+			result = Result.objects.get(itemcode=selected_code, start_date=s_date, end_date=e_date)
+		except:
+			result = Result(
+				itemcode = selected_code, 
+				start_date = s_date, 
+				end_date = e_date
+			)
+			result.save()
 
-	cnt = 0
-	with open(filepath, 'w') as f:
-		writer = csv.writer(f, csv.excel)
-		for price in prices:
-			interest = 0
-			next_item =  Price.objects.filter(itemcode=price.itemcode, wdate__gt=price.wdate).order_by('wdate').first()
-			if next_item:
-				current_price = price.getInterest()
-				print price.wdate
-				print current_price
-				print next_item.close
-				interest = (next_item.close - current_price) / current_price
-				print interest
-				print total_interest
-				total_interest += interest
-				total_weight += 10
+		total_interest = 0
+		total_weight = 0
+		total_index = 0
+		total_interest_index = 0
+		total_score = 0
+		total_interest_score = 0
+		total_index_score = 0
+		total_interest_index_score = 0
 
-				adj_score = 0
-				adj_index = 0
-				interest_score = 0
-				interest_index = 0
-				interest_score_index = 0
-			
-				try:
-					outcome = Outcome.objects.get(wdate=price.wdate, itemcode=price.itemcode)
-					adj_score = outcome.adjustScore()
-					adj_index = outcome.adjustIndex()
+		# 투자대비 수익률 변수 
+		intervsinvest = 0
+		intervsinvest_index = 0
+		intervsinvest_score = 0
 
-					adj_score_index = (adj_score + adj_index) / 2
+		intervsinvest_sum = 0
+		intervsinvest_index_sum = 0
+		intervsinvest_score_sum = 0
 
-					interest_score = (interest * adj_score)/10
-					interest_index = (interest * adj_index)/10
-					interest_score_index = (interest * adj_score_index) / 10
+		cnt = 0
+		with open(filepath, 'w') as f:
+			writer = csv.writer(f, csv.excel)
+			for price in prices:
+				interest = 0
+				next_price =  prices.filter(itemcode=price.itemcode, wdate__gt=price.wdate).order_by('wdate').first()
+				if next_price:
+					# print "------------------------------------------"
+					# print price.wdate
+					# print next_price.wdate
+					# print price.close
+					# print next_price.close
+					interest = (next_price.close - price.close) / price.close
+					# print interest
+					# print total_interest
+					total_interest += interest
+					total_weight += 10
 
-					total_score += adj_score
-					total_index += adj_index
-					total_index_score += adj_score_index
-
-					total_interest_index += interest_index
-					total_interest_score += interest_score
-					total_interest_index_score += interest_score_index
-
-					cnt = cnt + 1
-				except:
-					print "outcome related to price doesn't exist"
-				# print price.wdate 
+					adj_score = 0
+					adj_index = 0
+					interest_score = 0
+					interest_index = 0
+					interest_score_index = 0
 				
-				# save backtest result in db
-				try:
-					intervsinvest_sum = total_interest
-					intervsinvest_index_sum = (total_weight / total_index) * total_interest_index
-					intervsinvest_score_sum = (total_weight / total_score) * total_interest_score
-					intervsinvest_index_score_sum = (total_weight / total_index_score) * total_interest_index_score
-					log = Log.objects.get(result_id=result_id, wdate=price.wdate)
-					log.interest = interest
-					log.interest_sum = total_interest
-					log.interest_index = interest_index
-					log.interest_index_sum = total_interest_index
-					log.interest_score = interest_score
-					log.interest_score_sum = total_interest_score
-					log.interest_index_score = interest_score_index
-					log.interest_index_score_sum = total_interest_index_score
-					log.intervsinvest_sum = intervsinvest_sum
-					log.intervsinvest_index_sum = intervsinvest_index_sum
-					log.intervsinvest_score_sum = intervsinvest_score_sum
-					log.intervsinvest_index_score_sum = intervsinvest_index_score_sum
-					log.save(update_fields=['interest', 
-								'interest_sum', 'interest_index', 'interest_index_sum', 'interest_score', 'interest_score_sum', 
-								'interest_index_score', 'interest_index_score_sum', 'intervsinvest_sum', 'intervsinvest_index_sum', 'intervsinvest_score_sum', 'intervsinvest_index_score_sum'])
-					print "log updated in db"
-				except:
-					# intervsinvest_sum = (total_interest * total_weight) /  total_weight
-					# intervsinvest_index_sum = (total_interest_index * total_index) / total_weight
-					# intervsinvest_score_sum = (total_interest_score * total_score) / total_weight
-					intervsinvest_sum = total_interest
-					intervsinvest_index_sum = (total_weight / total_index) * total_interest_index
-					intervsinvest_score_sum = (total_weight / total_score) * total_interest_score 
-					intervsinvest_index_score_sum = (total_weight / total_index_score) * total_interest_index_score
-					log = Log(
-						result_id = result_id, 
-						wdate = price.wdate, 
-						interest = interest,
-						interest_sum = total_interest,
-						interest_index = interest_index,
-						interest_index_sum = total_interest_index,
-						interest_score = interest_score,
-						interest_score_sum = total_interest_score,
-						interest_index_score = interest_score_index,
-						interest_index_score_sum = total_interest_index_score,
-						intervsinvest_sum = intervsinvest_sum,
-						intervsinvest_index_sum = intervsinvest_index_sum,
-						intervsinvest_score_sum = intervsinvest_score_sum,
-						intervsinvest_index_score_sum = intervsinvest_index_score_sum
-					)
-					log.save() 
-					print "log saved in db"
+					try:
+						outcome = outcomes.filter(wdate=price.wdate).first()
+						print "------------------------------------------"
+						print outcome.wdate
+						# print outcome.DNA_score
+						# print outcome.DNA_index
+						
+						adj_score = outcome.adjustScore()
+						adj_index = outcome.adjustIndex()
+						adj_score_index = (adj_score + adj_index) / 2
 
-				# save in file 
-				writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, 10, interest, adj_index, interest_index, adj_score, interest_score, adj_score_index, interest_score_index])
-			else:
-				break
-		writer.writerow([price.itemcode.encode('euc-kr'), "Total", total_weight, total_interest, '', '', total_index, total_interest_index, '', '', total_score, total_interest_score, '', '', total_index_score, total_interest_index_score])
+						interest_score = (interest * adj_score)/10
+						interest_index = (interest * adj_index)/10
+						interest_score_index = (interest * adj_score_index) / 10
 
+						total_score += adj_score
+						total_index += adj_index
+						total_index_score += adj_score_index
+
+						total_interest_index += interest_index
+						total_interest_score += interest_score
+						total_interest_index_score += interest_score_index
+
+						# intervsinvest_sum = (total_interest * total_weight) /  total_weight
+						# intervsinvest_index_sum = (total_interest_index * total_index) / total_weight
+						# intervsinvest_score_sum = (total_interest_score * total_score) / total_weight
+
+						intervsinvest_sum = total_interest
+						intervsinvest_index_sum = (total_weight / total_index) * total_interest_index
+						intervsinvest_score_sum = (total_weight / total_score) * total_interest_score
+						intervsinvest_index_score_sum = (total_weight / total_index_score) * total_interest_index_score
+
+						# save backtest result in db
+						try:
+							log = Log.objects.get(result_id=result.id, wdate=price.wdate)
+							log.interest = interest
+							log.interest_sum = total_interest
+							log.interest_index = interest_index
+							log.interest_index_sum = total_interest_index
+							log.interest_score = interest_score
+							log.interest_score_sum = total_interest_score
+							log.interest_index_score = interest_score_index
+							log.interest_index_score_sum = total_interest_index_score
+							log.intervsinvest_sum = intervsinvest_sum
+							log.intervsinvest_index_sum = intervsinvest_index_sum
+							log.intervsinvest_score_sum = intervsinvest_score_sum
+							log.intervsinvest_index_score_sum = intervsinvest_index_score_sum
+							log.save(update_fields=['interest', 
+										'interest_sum', 'interest_index', 'interest_index_sum', 'interest_score', 'interest_score_sum', 
+										'interest_index_score', 'interest_index_score_sum', 'intervsinvest_sum', 'intervsinvest_index_sum', 'intervsinvest_score_sum', 'intervsinvest_index_score_sum'])
+							print "log updated in db"
+						except:
+							log = Log(
+								result_id = result.id, 
+								wdate = price.wdate, 
+								interest = interest,
+								interest_sum = total_interest,
+								interest_index = interest_index,
+								interest_index_sum = total_interest_index,
+								interest_score = interest_score,
+								interest_score_sum = total_interest_score,
+								interest_index_score = interest_score_index,
+								interest_index_score_sum = total_interest_index_score,
+								intervsinvest_sum = intervsinvest_sum,
+								intervsinvest_index_sum = intervsinvest_index_sum,
+								intervsinvest_score_sum = intervsinvest_score_sum,
+								intervsinvest_index_score_sum = intervsinvest_index_score_sum
+							)
+							log.save() 
+							print "log saved in db"
+
+						cnt = cnt + 1
+					except:
+						print "outcome related to price doesn't exist"
+					
+					# save in file 
+					writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, 10, interest, adj_index, interest_index, adj_score, interest_score, adj_score_index, interest_score_index])
+				else:
+					print "next price does not exist"
+					break
+			writer.writerow([price.itemcode.encode('euc-kr'), "Total", total_weight, total_interest, '', '', total_index, total_interest_index, '', '', total_score, total_interest_score, '', '', total_index_score, total_interest_index_score])
+	else:
+		print "prices or outcomes does not exist"
 		# 투자대비 수익률 계산
 		# intervsinvest = (total_interest * total_weight) /  total_weight
 		# intervsinvest_index = (total_interest_index * total_index) / total_weight
@@ -299,47 +334,8 @@ def store(request):
 
 	s_date = request.POST.get("s_date")
 	e_date = request.POST.get("e_date")
-	# print s_date
-	# outcomes = Outcome.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
 
-	# 가격 데이터 없을시 에러처리 필요함 
-	try:
-		prices = Price.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
-		# for price in prices:
-		# 	print price.wdate
+	writetocsv(s_date, e_date, selected_code)
 
-		# Create path of file
-		filename = "insu_" + selected_code + '_' + s_date + "_to_" + e_date + ".csv"
-		filepath = join(settings.MEDIA_ROOT, filename)
-		print filepath
-
-		# for idx in prices.values_list('id', flat=True):
-		# 	print Price.objects.get(pk=idx).itemcode
-
-		# print outcomes
-		# cnt = 0
-		# for outcome in outcomes:
-		# 	cnt = cnt + 1
-		# 	print outcome.wdate
-
-		try:
-			result = Result.objects.get(itemcode=selected_code, start_date=s_date, end_date=e_date)
-		except:
-			result = Result(
-				itemcode = selected_code, 
-				start_date = s_date, 
-				end_date = e_date
-			)
-			result.save() 
-
-		# print "sylee"
-
-		# outcomes_ids = tuple(outcomes.values_list('id', flat=True))
-		prices_ids = tuple(prices.values_list('id', flat=True))
-		writetocsv(filepath, prices_ids, result.id)
-		# print cnt 
-	except:
-		print "price data dosen't exists"
-	
 	# return HttpResponse("store")
 	return HttpResponseRedirect(reverse('insu_index'))
