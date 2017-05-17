@@ -3,12 +3,11 @@
 {% block content %}
 <div class="row">
 	<div class="col-md-10 col-md-offset-1">
-	{% if IVSI %}
-	<!-- <hr> -->
-		<h4>보유수익률 : {{ IVSI.0 |floatformat:10 }} %</h4>
-		<h4>DNA-리스크 based 수익률 : {{ IVSI.1 |floatformat:10 }} %</h4>
-		<h4>DNA-리턴 based 수익률 : {{ IVSI.2 |floatformat:10 }} %</h4>
-		<h4>DNA-리턴-리스크 based 수익률 : {{ IVSI.3 |floatformat:10 }} %</h4>
+	{% if last_log %}
+		<h4>보유수익률 : {{ last_log.intervsinvest_sum | floatformat:10 }}</h4>
+		<h4>DNA-리스크 based 수익률 : {{ last_log.intervsinvest_index_sum | floatformat:10 }}</h4>
+		<h4>DNA-리턴 based 수익률 : {{ last_log.intervsinvest_score_sum | floatformat:10 }}</h4>
+		<h4>DNA-리턴-리스크 based 수익률 : {{ last_log.intervsinvest_index_score_sum | floatformat:10 }}</h4>
 	<hr>
 	{% endif %}
 	</div>
@@ -18,24 +17,28 @@
 	<br><br><br>
 	<div id="chart2"  style="margin-left:-2%;"></div>
 	<br><br><br><br>
-	{% if rows %}
+	{% if logs %}
 	<table class="table table-striped">
     <thead>
       <tr>
         <th>코드</th>
         <th>날짜</th>
+
         <th>투자금액</th>
         <th><div>일간</div>수익률</th>
         <th><div>누적</div> 일간수익률</th>
         <th><div>보유</div>수익률</th>
+
         <th><div>DNA-리스크</div> based 비중</th>
         <th><div>일간</div>수익률</th>
         <th><div>누적</div> 일간수익률</th>
         <th><div>DNA-리스크</div> based 수익률</th>
+
         <th><div>DNA-리턴</div> based 비중</th>
         <th><div>일간</div>수익률</th>
         <th><div>누적</div> 일간수익률</th>
         <th><div>DNA-리턴</div> based 수익률</th>
+
         <th><div>DNA-리턴-리스크</div> based 평균비중</th>
         <th><div>일간</div>수익률</th>
         <th><div>누적</div> 일간수익률</th>
@@ -43,26 +46,30 @@
       </tr>
     </thead>
     <tbody>
-        {% for row in rows %}
+        {% for log in logs %}
       <tr>
-        <td>{{ row.0 | safe }}</td>
-        <td>{{ row.1 | safe }}</td>
-        <td>{{ row.2 |floatformat:5 }}</td>
-        <td>{{ row.3 |floatformat:5 }}</td>
-        <td>{{ row.4 |floatformat:5 }}</td>
-        <td>{{ row.5 |floatformat:5 }}</td>
-        <td>{{ row.6 |floatformat:5 }}</td>
-        <td>{{ row.7 |floatformat:5 }}</td>
-        <td>{{ row.8 |floatformat:5 }}</td>
-        <td>{{ row.9 |floatformat:5 }}</td>
-        <td>{{ row.10 |floatformat:5 }}</td>
-        <td>{{ row.11 |floatformat:5 }}</td>
-        <td>{{ row.12 |floatformat:5 }}</td>
-        <td>{{ row.13 |floatformat:5 }}</td>
-        <td>{{ row.14 |floatformat:5 }}</td>
-        <td>{{ row.15 |floatformat:5 }}</td>
-        <td>{{ row.16 |floatformat:5 }}</td>
-        <td>{{ row.17 |floatformat:5 }}</td>
+        <td>{{ log.result.itemcode | safe }}</td>
+        <td>{{ log.wdate | safe }}</td>
+
+        <td>{{ log.weight | floatformat:1 }}</td>
+        <td>{{ log.interest | floatformat:10 }}</td>
+        <td>{{ log.interest_sum | floatformat:10 }}</td>
+        <td>{{ log.intervsinvest_sum | floatformat:10 }}</td>
+
+        <td>{{ log.index | floatformat:10 }}</td>
+        <td>{{ log.interest_index |floatformat:10 }}</td>
+        <td>{{ log.interest_index_sum | floatformat:10 }}</td>
+        <td>{{ log.intervsinvest_index_sum | floatformat:10 }}</td>
+
+        <td>{{ log.score | floatformat:10 }}</td>
+        <td>{{ log.interest_score | floatformat:10 }}</td>
+        <td>{{ log.interest_score_sum | floatformat:10 }}</td>
+        <td>{{ log.intervsinvest_score_sum | floatformat:10 }}</td>
+
+        <td>{{ log.index_score | floatformat:10 }}</td>
+        <td>{{ log.interest_index_score | floatformat:10 }}</td>
+        <td>{{ log.interest_index_score_sum | floatformat:10 }}</td>
+        <td>{{ log.intervsinvest_index_score_sum | floatformat:10 }}</td>
       </tr>
       {% endfor %}
     </tbody>

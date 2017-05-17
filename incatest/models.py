@@ -105,18 +105,25 @@ class Result(models.Model):
 class Log(models.Model):
 	result = models.ForeignKey(Result)
 	wdate = models.CharField(max_length=10, blank=True, null=True)
+
+	weight = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True, default=10.0)
 	interest = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+	intervsinvest_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+
+	index = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_index = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_index_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+	intervsinvest_index_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+
+	score = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_score = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_score_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+	intervsinvest_score_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
+
+	index_score = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_index_score = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	interest_index_score_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
-
-	intervsinvest_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
-	intervsinvest_index_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
-	intervsinvest_score_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 	intervsinvest_index_score_sum = models.DecimalField(max_digits=30, decimal_places=17, blank=True, null=True)
 
 class InterVSInvest(models.Model):

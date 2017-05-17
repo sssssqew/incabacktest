@@ -21,110 +21,30 @@ from decimal import *
 
 # Create your views here.
 def index(request):
-	cnt = 0
-
-	files = []
-	for file in os.listdir(settings.MEDIA_ROOT):
-		files.append(os.path.splitext(file)[0])
-		print os.path.splitext(file)[0]
-	context = {'files':files}
+	results = Result.objects.all()
+	context = {"results":results}
 	return render(request, "incatest/index.html", context)
-	# return HttpResponse(cnt)
 
-def show(request, fname):
-	rows = []
+def show(request, result):
 
-	date = []
-	# interest = []
-	# interest_index = []
-	# interest_score = []
+	logs = Log.objects.filter(result=result)
+	wdate = list(map(lambda x: str(x[0]), logs.values_list('wdate')))
+	intervsinvest_sum = list(map(lambda x: str(x[0]), logs.values_list('intervsinvest_sum')))
+	intervsinvest_index_sum = list(map(lambda x: str(x[0]), logs.values_list('intervsinvest_index_sum')))
+	intervsinvest_score_sum = list(map(lambda x: str(x[0]), logs.values_list('intervsinvest_score_sum')))
+	intervsinvest_index_score_sum = list(map(lambda x: str(x[0]), logs.values_list('intervsinvest_index_score_sum')))
+	last_log = logs.last()
 
-	interest_IVSI = []
-	interest_index_IVSI = []
-	interest_score_IVSI = []
-	interest_index_score_IVSI = []
+	wdate.insert(0, 'x')
+	intervsinvest_sum.insert(0, '보유수익률')
+	intervsinvest_index_sum.insert(0, 'DNA-리스크 based 수익률')
+	intervsinvest_score_sum.insert(0, 'DNA-리턴 based 수익률')
+	intervsinvest_index_score_sum.insert(0, 'DNA-리턴-리스크 based 수익률')
 
-	ivsi = []
+	columns_sum = [wdate, intervsinvest_sum, intervsinvest_index_sum, intervsinvest_score_sum, intervsinvest_index_score_sum]
 
-	filename = fname + '.csv'
-	filepath = join(settings.MEDIA_ROOT, filename)
-
-	fnames = fname.split('_')
-	# print fnames
-	code = fnames[1]
-	s_date = fnames[2]
-	e_date = fnames[4]
-
-	result = Result.objects.get(itemcode=code, start_date=s_date, end_date=e_date)
-	print result.id
-	# try:
-	# 	IVSI = InterVSInvest.objects.get(result_id=result.id)
-	# 	print "IVSI exists"
-	# except:
-	# 	IVSI = InterVSInvest()
-	# 	print "IVSI dosen't exists"
-
-	with open(filepath, 'r') as f:
-		reader = list(csv.reader(f, delimiter=str(',')))
-		for row in reader: 
-			if row != reader[-1]:
-				# print row
-				date.append(row[1])
-				# interest.append(row[3])
-				# interest_index.append(row[5])
-				# interest_score.append(row[7])
-				log = Log.objects.get(result_id=result.id, wdate=row[1])
-				# print log.wdate
-				# print log.interest_sum
-				# interest.append(str(log.interest_sum))
-				# interest_index.append(str(log.interest_index_sum))
-				# interest_score.append(str(log.interest_score_sum))
-
-				interest_IVSI.append(str(log.intervsinvest_sum))
-				interest_index_IVSI.append(str(log.intervsinvest_index_sum))
-				interest_score_IVSI.append(str(log.intervsinvest_score_sum))
-				interest_index_score_IVSI.append(str(log.intervsinvest_index_score_sum))
-
-				# #누적수익률 추가 
-				# row.append(str(log.interest_sum))
-				# row.append(str(log.interest_index_sum))
-				# row.append(str(log.interest_score_sum))
-				# row.append(str(log.interest_index_score_sum))
-
-				# #투자대비 수익률 
-				# row.append(str(log.intervsinvest_sum))
-				# row.append(str(log.intervsinvest_index_sum))
-				# row.append(str(log.intervsinvest_score_sum))
-				# row.append(str(log.intervsinvest_index_score_sum))
-
-			else:
-				print row
-				iv = str(Decimal(row[3]) * 100) 
-				iv_index = str(Decimal(row[2])/Decimal(row[6])*Decimal(row[7]) * 100)
-				iv_score = str(Decimal(row[2])/Decimal(row[10])*Decimal(row[11]) * 100)
-				iv_index_score = str(Decimal(row[2])/Decimal(row[14])*Decimal(row[15]) * 100)
-				ivsi.append(iv)
-				ivsi.append(iv_index)
-				ivsi.append(iv_score)
-				ivsi.append(iv_index_score)
-
-			rows.append(row)
-
-	date.insert(0, 'x')
-	# interest.insert(0, '누적 일간수익률')
-	# interest_index.insert(0, '누적 일간수익률(Index)')
-	# interest_score.insert(0, '누적 일간수익률(Score)')
-
-	interest_IVSI.insert(0, '보유수익률')
-	interest_index_IVSI.insert(0, 'DNA-리스크 based 수익률')
-	interest_score_IVSI.insert(0, 'DNA-리턴 based 수익률')
-	interest_index_score_IVSI.insert(0, 'DNA-리턴-리스크 based 수익률')
-
-	# columns = [date, interest, interest_index, interest_score]
-	columns_sum = [date, interest_IVSI, interest_index_IVSI, interest_score_IVSI, interest_index_score_IVSI]
-	context = {'columns_sum': json.dumps(columns_sum), 'rows':rows, 'IVSI':ivsi}
+	context = {"logs":logs, "last_log":last_log, 'columns_sum': json.dumps(columns_sum)}
 	return render(request, 'incatest/show.html', context)
-
 
 def create(request):
 	funds = Fund.objects.all()
@@ -134,11 +54,6 @@ def create(request):
 
 @background(queue='backtest')
 def writetocsv(s_date, e_date, selected_code):
-	# Create path of file
-	filename = "insu_" + selected_code + '_' + s_date + "_to_" + e_date + ".csv"
-	filepath = join(settings.MEDIA_ROOT, filename)
-	print filepath
-
    # get prices
 	try:
 		prices = Price.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
@@ -150,7 +65,6 @@ def writetocsv(s_date, e_date, selected_code):
 	try:
 		outcomes = Outcome.objects.filter(itemcode=selected_code, wdate__range=[s_date, e_date])
 		outcomes = outcomes.order_by('wdate')
-		print outcomes.wdate
 	except:
 		print "outcomes does not exist"
 
@@ -186,155 +100,126 @@ def writetocsv(s_date, e_date, selected_code):
 		intervsinvest_score_sum = 0
 
 		cnt = 0
-		with open(filepath, 'w') as f:
-			writer = csv.writer(f, csv.excel)
-			for price in prices:
-				interest = 0
-				next_price =  prices.filter(itemcode=price.itemcode, wdate__gt=price.wdate).order_by('wdate').first()
-				if next_price:
-					# print "------------------------------------------"
-					# print price.wdate
-					# print next_price.wdate
-					# print price.close
-					# print next_price.close
-					interest = (next_price.close - price.close) / price.close
-					# print interest
-					# print total_interest
-					total_interest += interest
-					total_weight += 10
+		
+		for price in prices:
+			interest = 0
+			next_price =  prices.filter(wdate__gt=price.wdate).first()
+			
+			if next_price:
+				print "------------------------------------------"
+				print price.wdate
+				print next_price.wdate
+				print price.close
+				print next_price.close
+				interest = (next_price.close - price.close) / price.close
 
-					adj_score = 0
-					adj_index = 0
-					interest_score = 0
-					interest_index = 0
-					interest_score_index = 0
-				
-					try:
-						outcome = outcomes.filter(wdate=price.wdate).first()
-						print "------------------------------------------"
-						print outcome.wdate
-						# print outcome.DNA_score
-						# print outcome.DNA_index
-						
-						adj_score = outcome.adjustScore()
-						adj_index = outcome.adjustIndex()
-						adj_score_index = (adj_score + adj_index) / 2
+				total_interest += interest
+				total_weight += 10
 
-						interest_score = (interest * adj_score)/10
-						interest_index = (interest * adj_index)/10
-						interest_score_index = (interest * adj_score_index) / 10
-
-						total_score += adj_score
-						total_index += adj_index
-						total_index_score += adj_score_index
-
-						total_interest_index += interest_index
-						total_interest_score += interest_score
-						total_interest_index_score += interest_score_index
-
-						# intervsinvest_sum = (total_interest * total_weight) /  total_weight
-						# intervsinvest_index_sum = (total_interest_index * total_index) / total_weight
-						# intervsinvest_score_sum = (total_interest_score * total_score) / total_weight
-
-						intervsinvest_sum = total_interest
-						intervsinvest_index_sum = (total_weight / total_index) * total_interest_index
-						intervsinvest_score_sum = (total_weight / total_score) * total_interest_score
-						intervsinvest_index_score_sum = (total_weight / total_index_score) * total_interest_index_score
-
-						# save backtest result in db
-						try:
-							log = Log.objects.get(result_id=result.id, wdate=price.wdate)
-							log.interest = interest
-							log.interest_sum = total_interest
-							log.interest_index = interest_index
-							log.interest_index_sum = total_interest_index
-							log.interest_score = interest_score
-							log.interest_score_sum = total_interest_score
-							log.interest_index_score = interest_score_index
-							log.interest_index_score_sum = total_interest_index_score
-							log.intervsinvest_sum = intervsinvest_sum
-							log.intervsinvest_index_sum = intervsinvest_index_sum
-							log.intervsinvest_score_sum = intervsinvest_score_sum
-							log.intervsinvest_index_score_sum = intervsinvest_index_score_sum
-							log.save(update_fields=['interest', 
-										'interest_sum', 'interest_index', 'interest_index_sum', 'interest_score', 'interest_score_sum', 
-										'interest_index_score', 'interest_index_score_sum', 'intervsinvest_sum', 'intervsinvest_index_sum', 'intervsinvest_score_sum', 'intervsinvest_index_score_sum'])
-							print "log updated in db"
-						except:
-							log = Log(
-								result_id = result.id, 
-								wdate = price.wdate, 
-								interest = interest,
-								interest_sum = total_interest,
-								interest_index = interest_index,
-								interest_index_sum = total_interest_index,
-								interest_score = interest_score,
-								interest_score_sum = total_interest_score,
-								interest_index_score = interest_score_index,
-								interest_index_score_sum = total_interest_index_score,
-								intervsinvest_sum = intervsinvest_sum,
-								intervsinvest_index_sum = intervsinvest_index_sum,
-								intervsinvest_score_sum = intervsinvest_score_sum,
-								intervsinvest_index_score_sum = intervsinvest_index_score_sum
-							)
-							log.save() 
-							print "log saved in db"
-
-						cnt = cnt + 1
-					except:
-						print "outcome related to price doesn't exist"
+				adj_score = 0
+				adj_index = 0
+				interest_score = 0
+				interest_index = 0
+				interest_score_index = 0
+			
+				try:
+					outcome = outcomes.filter(wdate=price.wdate).first()
+					print "------------------------------------------"
+					print outcome.wdate
+					print outcome.DNA_score
+					print outcome.DNA_index
 					
-					# save in file 
-					writer.writerow([price.itemcode.encode('euc-kr'), price.wdate, 
-						10, interest, total_interest, intervsinvest_sum, 
-						adj_index, interest_index, total_interest_index, intervsinvest_index_sum,
-						adj_score, interest_score, total_interest_score, intervsinvest_score_sum,
-						adj_score_index, interest_score_index, total_interest_index_score, intervsinvest_index_score_sum])
-				else:
-					print "next price does not exist"
-					break
-			writer.writerow([price.itemcode.encode('euc-kr'), "Total", 
-				total_weight, total_interest, '', '', 
-				total_index, total_interest_index, '', '', 
-				total_score, total_interest_score, '', '', 
-				total_index_score, total_interest_index_score])
+					adj_score = outcome.adjustScore()
+					adj_index = outcome.adjustIndex()
+					adj_score_index = (adj_score + adj_index) / 2
+
+					interest_score = (interest * adj_score)/10
+					interest_index = (interest * adj_index)/10
+					interest_score_index = (interest * adj_score_index) / 10
+
+					total_score += adj_score
+					total_index += adj_index
+					total_index_score += adj_score_index
+
+					total_interest_index += interest_index
+					total_interest_score += interest_score
+					total_interest_index_score += interest_score_index
+
+					# intervsinvest_sum = (total_interest * total_weight) /  total_weight
+					# intervsinvest_index_sum = (total_interest_index * total_index) / total_weight
+					# intervsinvest_score_sum = (total_interest_score * total_score) / total_weight
+
+					intervsinvest_sum = total_interest
+					intervsinvest_index_sum = (total_weight / total_index) * total_interest_index
+					intervsinvest_score_sum = (total_weight / total_score) * total_interest_score
+					intervsinvest_index_score_sum = (total_weight / total_index_score) * total_interest_index_score
+
+					# save backtest result in db
+					try:
+						log = Log.objects.get(result_id=result.id, wdate=price.wdate)
+						log.interest = interest
+						log.interest_sum = total_interest
+						log.intervsinvest_sum = intervsinvest_sum
+
+						log.index = adj_index
+						log.interest_index = interest_index
+						log.interest_index_sum = total_interest_index
+						log.intervsinvest_index_sum = intervsinvest_index_sum
+
+						log.score = adj_score
+						log.interest_score = interest_score
+						log.interest_score_sum = total_interest_score
+						log.intervsinvest_score_sum = intervsinvest_score_sum
+
+						log.index_score = adj_score_index
+						log.interest_index_score = interest_score_index
+						log.interest_index_score_sum = total_interest_index_score
+						log.intervsinvest_index_score_sum = intervsinvest_index_score_sum
+
+						log.save(update_fields=[
+							'interest', 'interest_sum', 'intervsinvest_sum',
+							'index', 'interest_index', 'interest_index_sum', 'intervsinvest_index_sum',
+							'score', 'interest_score', 'interest_score_sum', 'intervsinvest_score_sum',
+							'index_score', 'interest_index_score', 'interest_index_score_sum', 'intervsinvest_index_score_sum'
+						])
+						print "log updated in db"
+					except:
+						log = Log(
+							result_id = result.id, 
+							wdate = price.wdate, 
+							interest = interest,
+							interest_sum = total_interest,
+							intervsinvest_sum = intervsinvest_sum,
+
+							index = adj_index,
+							interest_index = interest_index,
+							interest_index_sum = total_interest_index,
+							intervsinvest_index_sum = intervsinvest_index_sum,
+
+							score = adj_score,
+							interest_score = interest_score,
+							interest_score_sum = total_interest_score,
+							intervsinvest_score_sum = intervsinvest_score_sum,
+
+							index_score = adj_score_index,
+							interest_index_score = interest_score_index,
+							interest_index_score_sum = total_interest_index_score,
+							intervsinvest_index_score_sum = intervsinvest_index_score_sum
+						)
+						log.save() 
+						print "log saved in db"
+
+					cnt = cnt + 1
+				except:
+					print "outcome related to price doesn't exist"
+				
+			else:
+				print "next price does not exist"
+				break
+
 	else:
 		print "prices or outcomes does not exist"
-		# 투자대비 수익률 계산
-		# intervsinvest = (total_interest * total_weight) /  total_weight
-		# intervsinvest_index = (total_interest_index * total_index) / total_weight
-		# intervsinvest_score = (total_interest_score * total_score) / total_weight
 
-		# intervsinvest = total_interest
-		# intervsinvest_index = (Decimal(total_weight) / total_index) * total_interest_index 
-		# intervsinvest_score = (Decimal(total_weight) / total_score) * total_interest_score 
-
-		# print total_weight
-		# print total_index
-		# print total_interest_index
-		# print total_score
-		# print total_interest_score
-
-		# save backtest result in db
-		# try:
-		# 	IVSI = InterVSInvest.objects.get(result_id=result_id)
-		# 	# IVSI.intervsinvest = intervsinvest
-		# 	# IVSI.intervsinvest_index = intervsinvest_index
-		# 	# IVSI.intervsinvest_score = intervsinvest_score
-		# 	# IVSI.save(update_fields=['intervsinvest', 
-		# 	# 				'intervsinvest_index', 'intervsinvest_score'])
-		# 	print "IVSI exists in db"
-		# except:
-		# 	IVSI = InterVSInvest(
-		# 		result_id = result_id, 
-		# 		intervsinvest = intervsinvest,
-		# 		intervsinvest_index = intervsinvest_index,
-		# 		intervsinvest_score = intervsinvest_score
-		# 	)
-		# 	IVSI.save()
-		# 	print "IVSI saved in db"
-
-	# print cnt
 
 def store(request):
 	today = datetime.now().strftime("%Y%m%d")
