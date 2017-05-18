@@ -234,19 +234,19 @@ def store(request):
 	# return HttpResponse("store")
 	return HttpResponseRedirect(reverse('insu_index'))
 
-def csv(request, result):
+def printcsv(request, result):
 	logs = Log.objects.filter(result=result)
 	
 	# Create the HttpResponse object with the appropriate CSV header.
 	response = HttpResponse(content_type='text/csv')
-	filename = logs.result.itemcode + '_' + logs.result.start_date + '_' + logs.result.end_date + ".csv"
+	filename = logs[0].result.itemcode + '_' + logs[0].result.start_date + '_' + logs[0].result.end_date + ".csv"
 	response['Content-Disposition'] = 'attachment; filename=' + filename
 	writer = csv.writer(response)
 
-	writer.writerow(['코드', '날짜', '투자금액', '일간수익률', '누적 일간수익률', '보유수익률',
-									'DNA-리스크 based 비중', '일간수익률', '누적 일간수익률', 'DNA-리스크 based 수익률',
-									'DNA-리턴 based 비중', '일간수익률', '누적 일간수익률', 'DNA-리턴 based 수익률',
-									'DNA-리턴-리스크 based 평균비중', '일간수익률', '누적 일간수익률', 'DNA-리턴-리스크 based 수익률'
+	writer.writerow(['코드'.encode('euc-kr'), '날짜'.encode('euc-kr'), '투자금액'.encode('euc-kr'), '일간수익률'.encode('euc-kr'), '누적 일간수익률'.encode('euc-kr'), '보유수익률'.encode('euc-kr'),
+									'DNA-리스크 based 비중'.encode('euc-kr'), '일간수익률'.encode('euc-kr'), '누적 일간수익률'.encode('euc-kr'), 'DNA-리스크 based 수익률'.encode('euc-kr'),
+									'DNA-리턴 based 비중'.encode('euc-kr'), '일간수익률'.encode('euc-kr'), '누적 일간수익률'.encode('euc-kr'), 'DNA-리턴 based 수익률'.encode('euc-kr'),
+									'DNA-리턴-리스크 based 평균비중'.encode('euc-kr'), '일간수익률'.encode('euc-kr'), '누적 일간수익률'.encode('euc-kr'), 'DNA-리턴-리스크 based 수익률'.encode('euc-kr')
 								])
 
 	for log in logs:

@@ -11,7 +11,7 @@ urlpatterns = [
 	url(r'^back-tests/create/$', views.create, name='insu_create'),
 	url(r'^back-tests/store/$', views.store, name='insu_store'),
 	url(r'^back-tests/(?P<result>.+)/$', views.show, name='insu_show'),
-	url(r'^back-tests/(?P<result>.+)/csv$', views.csv, name='insu_csv'),
+	url(r'^back-tests/(?P<result>.+)/csv$', views.printcsv, name='insu_csv'),
 ]
 
 urlpatterns += static('/upload/', document_root=settings.MEDIA_ROOT)
