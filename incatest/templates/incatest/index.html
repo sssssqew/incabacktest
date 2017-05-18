@@ -5,15 +5,32 @@
 	<div class="col-md-6 col-md-offset-3">
 		<a class="btn btn-default pull-right" href="{% url 'insu_create' %}">
 		<i class="glyphicon glyphicon-plus"></i> Create</a>
-	</div>
-	<div class="col-md-6 col-md-offset-3">
-		{% if results %}
-		<ul>
-		{% for result in results %}
-		<a href="{% url 'insu_show' result=result.id %}"><li>{{ result.itemcode }} | {{ result.start_date }} ~ {{ result.end_date }}</li></a>
-		{% endfor %}
-		</ul>
+	
+	<br><br><br>
+
+		{% if results %}	
+	<table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Test Result</th>
+        <th>Start date</th>
+        <th>End date</th>
+        <th>Print</th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for result in results %}
+      <tr>
+        <td><a href="{% url 'insu_show' result=result.id %}">{{ result.itemcode }}</a></td>
+        <td>{{ result.start_date }}</td>
+        <td>{{ result.end_date }}</td>
+        <td><a href="{% url 'insu_csv' result=result.id %}">CSV</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 		{% endif %}
 	</div>
+	
 </div>
 {% endblock %}

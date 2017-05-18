@@ -233,3 +233,29 @@ def store(request):
 
 	# return HttpResponse("store")
 	return HttpResponseRedirect(reverse('insu_index'))
+
+def csv(request, result):
+	logs = Log.objects.filter(result=result)
+	
+	# Create the HttpResponse object with the appropriate CSV header.
+	response = HttpResponse(content_type='text/csv')
+	filename = logs.result.itemcode + '_' + logs.result.start_date + '_' + logs.result.end_date + ".csv"
+	response['Content-Disposition'] = 'attachment; filename=' + filename
+	writer = csv.writer(response)
+
+	writer.writerow(['코드', '날짜', '투자금액', '일간수익률', '누적 일간수익률', '보유수익률',
+									'DNA-리스크 based 비중', '일간수익률', '누적 일간수익률', 'DNA-리스크 based 수익률',
+									'DNA-리턴 based 비중', '일간수익률', '누적 일간수익률', 'DNA-리턴 based 수익률',
+									'DNA-리턴-리스크 based 평균비중', '일간수익률', '누적 일간수익률', 'DNA-리턴-리스크 based 수익률'
+								])
+
+	for log in logs:
+		writer.writerow([
+									log.result.itemcode, log.wdate, 
+									log.weight, log.interest, log.interest_sum, log.intervsinvest_sum,
+									log.index, log.interest_index, log.interest_index_sum, log.intervsinvest_index_sum,
+									log.score, log.interest_score, log.interest_score_sum, log.intervsinvest_score_sum,
+									log.index_score, log.interest_index_score, log.interest_index_score_sum, log.intervsinvest_index_score_sum
+								])
+
+	return response
